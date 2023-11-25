@@ -1,0 +1,41 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  isRegistered  Boolean   @default(false)
+
+  password      String?
+
+  vaults        Vault[]
+}
+
+
+model Vault {
+  id        String   @id @default(uuid())
+  name      String
+  owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerId   String
+
+  notes     Note[]
+}
+
+model Note {
+  id        String   @id @default(uuid())
+  title     String
+  content   String
+  vault     Vault    @relation(fields: [vaultId], references: [id], onDelete: Cascade)
+  vaultId   String
+  createdAt DateTime @default(now())
+}
