@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { CreateVaultDto } from './dto/create-vault.dto';
 import { UpdateVaultDto } from './dto/update-vault.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 
@@ -7,28 +6,39 @@ import { PrismaService } from 'src/prisma/prisma.service';
 export class VaultsService {
   constructor(private prisma: PrismaService) {}
 
-  create(userId: string, createVaultDto: CreateVaultDto) {
+  async create(userId: string, name: string) {
     return this.prisma.vault.create({
       data: {
-        ...createVaultDto,
+        name: name,
         owner: { connect: { id: userId } },
       },
     });
   }
 
-  findAll() {
-    return `This action returns all vaults`;
+  findAll(userId: string) {
+    return this.prisma.vault.findMany({
+      where: {
+        owner: {
+          id: userId,
+        },
+      },
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} vault`;
+  update(id: string, updateVaultDto: UpdateVaultDto) {
+    return this.prisma.vault.update({
+      where: {
+        id: id,
+      },
+      data: updateVaultDto,
+    });
   }
 
-  update(id: number, updateVaultDto: UpdateVaultDto) {
-    return `This action updates a #${id} vault`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} vault`;
+  remove(id: string) {
+    return this.prisma.vault.delete({
+      where: {
+        id: id,
+      },
+    });
   }
 }

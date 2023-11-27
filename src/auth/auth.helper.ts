@@ -8,7 +8,6 @@ export function generateTokens(
 ): { accessToken: string; refreshToken: string } {
   const userAsJwtPayload: JwtPayload = {
     id: user.id,
-    isRegistered: user.isRegistered,
   };
 
   const accessToken = jwtService.sign(

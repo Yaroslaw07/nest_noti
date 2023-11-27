@@ -7,5 +7,6 @@ import { VaultsController } from './vaults.controller';
   controllers: [VaultsController],
   providers: [VaultsService],
   imports: [PrismaModule],
+  exports: [VaultsService],
 })
 export class VaultsModule {}

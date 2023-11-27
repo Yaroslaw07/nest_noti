@@ -3,7 +3,6 @@ CREATE TABLE "User" (
     "id" TEXT NOT NULL,
     "name" TEXT,
     "email" TEXT,
-    "isRegistered" BOOLEAN NOT NULL DEFAULT false,
     "password" TEXT,
 
     CONSTRAINT "User_pkey" PRIMARY KEY ("id")
