@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { VaultsController } from './VaultsController';
+import { VaultsController } from './vaults.controller';
 import { VaultsService } from './vaults.service';
 
 describe('VaultsController', () => {

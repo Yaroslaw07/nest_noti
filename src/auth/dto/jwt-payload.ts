@@ -4,7 +4,4 @@ export class JwtPayload {
   @IsNotEmpty()
   @IsString()
   id: string;
-
-  @IsNotEmpty()
-  isRegistered: boolean;
 }
