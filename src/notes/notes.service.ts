@@ -1,29 +1,31 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { ConflictException, Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Note } from './entities/note.entity';
 
 @Injectable()
 export class NotesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    @InjectRepository(Note)
+    private notesRepository: Repository<Note>,
+  ) {}
 
   create(vaultId: string) {
-    console.log('vaultId', vaultId);
-    return this.prisma.note.create({
-      data: {
-        title: 'Undefined',
-        content: '',
-        vault: {
-          connect: {
-            id: vaultId,
-          },
-        },
+    return this.notesRepository.save({
+      title: 'Undefined',
+      content: '',
+      vault: {
+        id: vaultId,
       },
     });
   }
 
   findAll(vaultId: string) {
-    return this.prisma.note.findMany({
+    return this.notesRepository.find({
       where: {
-        vaultId: vaultId,
+        vault: {
+          id: vaultId,
+        },
       },
       select: {
         id: true,
@@ -33,30 +35,42 @@ export class NotesService {
   }
 
   findOne(noteId: string) {
-    return this.prisma.note.findFirst({
+    return this.notesRepository.findOne({
       where: {
         id: noteId,
       },
     });
   }
 
-  update(noteId: string, newTitle: string, newContent: string) {
-    return this.prisma.note.update({
+  async update(noteId: string, newTitle: string, newContent: string) {
+    const existingNote = await this.notesRepository.findOne({
       where: {
         id: noteId,
       },
-      data: {
-        title: newTitle,
-        content: newContent,
-      },
+    });
+
+    if (!existingNote) {
+      throw new ConflictException('Note does not exist');
+    }
+
+    return this.notesRepository.save({
+      ...existingNote,
+      title: newTitle,
+      content: newContent,
     });
   }
 
-  remove(noteId: string) {
-    return this.prisma.note.delete({
+  async remove(noteId: string) {
+    const existingNote = await this.notesRepository.findOne({
       where: {
         id: noteId,
       },
     });
+
+    if (!existingNote) {
+      throw new ConflictException('Note does not exist');
+    }
+
+    return this.notesRepository.remove(existingNote);
   }
 }

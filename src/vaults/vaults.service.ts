@@ -1,16 +1,23 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { UpdateVaultDto } from './dto/update-vault.dto';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Vault } from './entities/vault.entity';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class VaultsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    @InjectRepository(Vault)
+    private vaultsRepository: Repository<Vault>,
+  ) {}
 
   async create(userId: string, name: string) {
-    const existingVault = await this.prisma.vault.findFirst({
+    const existingVault = await this.vaultsRepository.findOne({
       where: {
         name: name,
-        ownerId: userId,
+        owner: {
+          id: userId,
+        },
       },
     });
 
@@ -18,46 +25,66 @@ export class VaultsService {
       throw new ConflictException('Vault with this name already exists');
     }
 
-    return this.prisma.vault.create({
-      data: {
-        name,
-        owner: {
-          connect: {
-            id: userId,
-          },
-        },
+    return this.vaultsRepository.save({
+      name,
+      owner: {
+        id: userId,
       },
     });
   }
 
+  findOne(id: string) {
+    return this.vaultsRepository.findOne({
+      where: {
+        id: id,
+      },
+    });
+  }
+
+  findOneWithOwner(id: string) {
+    return this.vaultsRepository.findOne({
+      where: {
+        id: id,
+      },
+      relations: ['owner'],
+    });
+  }
+
   findAll(userId: string) {
-    return this.prisma.vault.findMany({
+    return this.vaultsRepository.find({
       where: {
         owner: {
           id: userId,
         },
       },
-      select: {
-        id: true,
-        name: true,
-      },
+      select: ['id', 'name'],
     });
   }
 
-  update(id: string, updateVaultDto: UpdateVaultDto) {
-    return this.prisma.vault.update({
-      where: {
-        id: id,
-      },
-      data: updateVaultDto,
+  async update(id: string, updateVaultDto: UpdateVaultDto) {
+    const existingVault = await this.vaultsRepository.findOne({
+      where: { id: id },
+    });
+
+    if (!existingVault) {
+      throw new ConflictException('Vault does not exist');
+    }
+
+    return this.vaultsRepository.save({
+      ...existingVault,
+      ...updateVaultDto,
     });
   }
 
-  remove(id: string) {
-    return this.prisma.vault.delete({
-      where: {
-        id: id,
-      },
+  async remove(id: string) {
+    const existingVault = await this.vaultsRepository.findOne({
+      where: { id: id },
     });
+
+    if (!existingVault) {
+      throw new ConflictException('Vault does not exist');
+    }
+
+    return this.vaultsRepository.remove(existingVault);
   }
 }

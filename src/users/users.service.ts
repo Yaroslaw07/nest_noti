@@ -1,16 +1,21 @@
 import { ConflictException, Injectable } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { InjectRepository } from '@nestjs/typeorm';
 
 import * as bcrypt from 'bcrypt';
+import { User } from './entities/user.entity';
+import { Repository } from 'typeorm';
 
 export const roundsOfHashing = 10;
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    @InjectRepository(User)
+    private usersRepository: Repository<User>,
+  ) {}
 
   async create(username: string, email: string, password: string) {
-    const user = await this.prisma.user.findFirst({
+    const user = await this.usersRepository.findOne({
       where: {
         email: email,
       },
@@ -22,25 +27,19 @@ export class UsersService {
 
     const hashedPassword = await bcrypt.hash(password, roundsOfHashing);
 
-    return this.prisma.user.create({
-      data: {
-        name: username,
-        email,
-        password: hashedPassword,
-      },
+    return this.usersRepository.save({
+      name: username,
+      email: email,
+      password: hashedPassword,
     });
   }
 
   findOne(id: string) {
-    return this.prisma.user.findFirst({
-      where: {
-        id: id,
-      },
-    });
+    return this.usersRepository.findOne({ where: { id: id } });
   }
 
   findOneByEmail(email: string) {
-    return this.prisma.user.findFirst({
+    return this.usersRepository.findOne({
       where: {
         email: email,
       },

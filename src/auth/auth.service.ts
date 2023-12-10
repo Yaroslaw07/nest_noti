@@ -44,8 +44,6 @@ export class AuthService {
   }
 
   async refresh(refreshToken: string): Promise<AuthEntity> {
-    console.log(refreshToken);
-
     const { userId } = this.jwtService.verify(refreshToken);
 
     const user = await this.usersService.findOne(userId);

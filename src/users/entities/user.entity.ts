@@ -1,17 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsArray, IsNotEmpty, IsString } from 'class-validator';
-import { Note } from 'src/notes/entities/note.entity';
-import { User } from 'src/users/entities/user.entity';
-import {
-  Column,
-  Entity,
-  ManyToOne,
-  OneToMany,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
+import { Vault } from 'src/vaults/entities/vault.entity';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
-export class Vault {
+export class User {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
@@ -27,13 +20,19 @@ export class Vault {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  @ManyToOne(() => User, (user) => user.vaults, { nullable: false })
-  owner: User;
+  @Column('text', { unique: true })
+  email: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  @Column('text')
+  password: string;
 
   @ApiProperty()
   @IsArray()
-  @OneToMany(() => Note, (note) => note.id, {
+  @OneToMany(() => Vault, (vault) => vault.id, {
     onDelete: 'CASCADE',
   })
-  notes: Note[];
+  vaults: Vault[];
 }
