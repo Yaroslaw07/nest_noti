@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { UpdateVaultDto } from './dto/update-vault.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 
@@ -7,10 +7,25 @@ export class VaultsService {
   constructor(private prisma: PrismaService) {}
 
   async create(userId: string, name: string) {
+    const existingVault = await this.prisma.vault.findFirst({
+      where: {
+        name: name,
+        ownerId: userId,
+      },
+    });
+
+    if (existingVault) {
+      throw new ConflictException('Vault with this name already exists');
+    }
+
     return this.prisma.vault.create({
       data: {
-        name: name,
-        owner: { connect: { id: userId } },
+        name,
+        owner: {
+          connect: {
+            id: userId,
+          },
+        },
       },
     });
   }
@@ -21,6 +36,10 @@ export class VaultsService {
         owner: {
           id: userId,
         },
+      },
+      select: {
+        id: true,
+        name: true,
       },
     });
   }
