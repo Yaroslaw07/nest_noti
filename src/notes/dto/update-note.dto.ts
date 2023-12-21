@@ -8,7 +8,6 @@ export class UpdateNoteDto {
   title?: string;
 
   @ApiProperty({ required: false })
-  @IsNotEmpty()
   @IsString()
   content?: string;
 }

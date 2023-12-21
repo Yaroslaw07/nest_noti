@@ -30,6 +30,7 @@ export class NotesService {
       select: {
         id: true,
         title: true,
+        createdAt: true,
       },
     });
   }

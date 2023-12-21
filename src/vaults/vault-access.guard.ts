@@ -9,6 +9,7 @@ export class VaultAccessGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
 
     const userIdFromJwt = request.user.id;
+
     const vaultIdFromRequest = request.headers?.vault_id;
 
     if (!vaultIdFromRequest) {
