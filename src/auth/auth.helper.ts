@@ -12,11 +12,11 @@ export function generateTokens(
 
   const accessToken = jwtService.sign(
     { ...userAsJwtPayload },
-    { expiresIn: '15m' },
+    { expiresIn: +process.env.JWT_ACCESS_TOKEN_EXPIRATION_TIME! },
   );
   const refreshToken = jwtService.sign(
     { userId: user.id },
-    { expiresIn: '7d' },
+    { expiresIn: +process.env.JWT_REFRESH_TOKEN_EXPIRATION_TIME! },
   );
 
   return { accessToken, refreshToken };
