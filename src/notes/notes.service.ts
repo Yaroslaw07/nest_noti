@@ -10,7 +10,7 @@ export class NotesService {
     private notesRepository: Repository<Note>,
   ) {}
 
-  create(vaultId: string) {
+  async create(vaultId: string) {
     return this.notesRepository.save({
       title: 'Undefined',
       content: '',

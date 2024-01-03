@@ -14,6 +14,7 @@ import { VaultAccessGuard } from 'src/vaults/vault-access.guard';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { UpdateNoteDto } from './dto/update-note.dto';
 import { VaultId } from 'src/vaults/vault.decorator';
+import { SocketGateway } from 'src/socket/socket.gateway';
 
 @Controller('notes')
 @UseGuards(JwtAuthGuard, VaultAccessGuard)
@@ -24,16 +25,23 @@ import { VaultId } from 'src/vaults/vault.decorator';
   required: true,
 })
 export class NotesController {
-  constructor(private readonly notesService: NotesService) {}
+  constructor(
+    private readonly notesService: NotesService,
+    private socketGateway: SocketGateway,
+  ) {}
 
   @Post()
-  create(@VaultId() valueId: string) {
-    return this.notesService.create(valueId);
+  async create(@VaultId() vaultId: string) {
+    const newNote = await this.notesService.create(vaultId);
+
+    this.socketGateway.server.to(vaultId).emit('newNote', newNote.id);
+
+    return newNote;
   }
 
   @Get()
-  findAll(@VaultId() valueId: string) {
-    return this.notesService.findAll(valueId);
+  findAll(@VaultId() vaultId: string) {
+    return this.notesService.findAll(vaultId);
   }
 
   @Get(':id')
@@ -50,7 +58,11 @@ export class NotesController {
   }
 
   @Delete(':id')
-  remove(@Param('id') noteId: string) {
-    return this.notesService.remove(noteId);
+  async remove(@VaultId() vaultId: string, @Param('id') noteId: string) {
+    const result = await this.notesService.remove(noteId);
+
+    this.socketGateway.server.to(vaultId).emit('noteDeleted', noteId);
+
+    return result;
   }
 }
