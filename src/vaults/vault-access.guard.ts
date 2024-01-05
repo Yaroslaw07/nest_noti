@@ -15,8 +15,7 @@ export class VaultAccessGuard implements CanActivate {
     if (!vaultIdFromRequest) {
       return false;
     }
-    const vault = await this.vaultsService.findOneWithOwner(vaultIdFromRequest);
 
-    return vault && vault.owner.id === userIdFromJwt;
+    return this.vaultsService.checkOwnership(userIdFromJwt, vaultIdFromRequest);
   }
 }

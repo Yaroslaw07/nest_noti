@@ -50,11 +50,20 @@ export class NotesController {
   }
 
   @Patch(':id')
-  update(
+  async update(
+    @VaultId() vaultId: string,
     @Param('id') noteId: string,
-    @Body() { title, content }: UpdateNoteDto,
+    @Body() updateNote: UpdateNoteDto,
   ) {
-    return this.notesService.update(noteId, title, content);
+    const { title, content, isTitleUpdated } = updateNote;
+
+    const updatedNote = await this.notesService.update(noteId, title, content);
+
+    this.socketGateway.server
+      .to(vaultId)
+      .emit('noteUpdated', { updatedNote, isTitleUpdated });
+
+    return updatedNote;
   }
 
   @Delete(':id')

@@ -87,4 +87,14 @@ export class VaultsService {
 
     return this.vaultsRepository.remove(existingVault);
   }
+
+  public async checkOwnership(userId: string, vaultId: string) {
+    const vault = await this.findOneWithOwner(vaultId);
+
+    if (!vault) {
+      return false;
+    }
+
+    return vault.owner.id === userId;
+  }
 }
