@@ -19,6 +19,10 @@ export class NotesGateway {
     private vaultsService: VaultsService,
   ) {}
 
+  async afterInit() {
+    console.log('Notes socket initialized');
+  }
+
   async handleConnection(client: Socket) {
     try {
       const { id } = await this.authService.getPayload(

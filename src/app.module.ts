@@ -18,6 +18,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       url: process.env.DATABASE_URL,
       synchronize: process.env.NODE_ENV !== 'production',
       autoLoadEntities: true,
+      entities: ['dist/**/*.entity{.ts,.js}'],
     }),
     AuthModule,
     UsersModule,
