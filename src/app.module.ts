@@ -9,7 +9,6 @@ import { NotesModule } from './notes/notes.module';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { JwtStrategy } from './auth/strategies/jwt.strategy';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { SocketModule } from './socket/socket.module';
 
 @Module({
   imports: [
@@ -24,7 +23,6 @@ import { SocketModule } from './socket/socket.module';
     UsersModule,
     VaultsModule,
     NotesModule,
-    SocketModule,
   ],
   controllers: [AppController],
   providers: [AppService, JwtAuthGuard, JwtStrategy],

@@ -8,8 +8,8 @@ import { AuthService } from 'src/auth/auth.service';
 import { UsersService } from 'src/users/users.service';
 import { VaultsService } from 'src/vaults/vaults.service';
 
-@WebSocketGateway({ cors: true })
-export class SocketGateway {
+@WebSocketGateway({ cors: true, namespace: 'notes' })
+export class NotesGateway {
   @WebSocketServer()
   server: Server;
 
