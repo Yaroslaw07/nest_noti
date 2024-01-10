@@ -1,7 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsDate, IsNotEmpty, IsString } from 'class-validator';
+import { NoteBlock } from 'src/note-blocks/entities/note-block.entity';
 import { Vault } from 'src/vaults/entities/vault.entity';
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity()
 export class Note {
@@ -17,10 +24,10 @@ export class Note {
   @Column('text')
   title: string;
 
-  @ApiProperty()
-  @IsString()
-  @Column('text')
-  content: string;
+  @OneToMany(() => NoteBlock, (contentBlock) => contentBlock.note, {
+    cascade: true,
+  })
+  contentBlocks: NoteBlock[];
 
   @ApiProperty()
   @IsDate()
@@ -30,6 +37,9 @@ export class Note {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  @ManyToOne(() => Vault, (vault) => vault.notes, { nullable: false })
+  @ManyToOne(() => Vault, (vault) => vault.notes, {
+    nullable: false,
+    cascade: true,
+  })
   vault: Vault;
 }

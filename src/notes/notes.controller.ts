@@ -66,6 +66,21 @@ export class NotesController {
     return updatedNote;
   }
 
+  @Patch(':id/title')
+  async updateTitle(
+    @VaultId() vaultId: string,
+    @Param('id') noteId: string,
+    @Body() newTitle: string,
+  ) {
+    const updatedNote = await this.notesService.updateTitle(noteId, newTitle);
+
+    this.notesGateway.server
+      .to(vaultId)
+      .emit('noteUpdated', { updatedNote, isTitleUpdated: true });
+
+    return updatedNote;
+  }
+
   @Delete(':id')
   async remove(@VaultId() vaultId: string, @Param('id') noteId: string) {
     const result = await this.notesService.remove(noteId);

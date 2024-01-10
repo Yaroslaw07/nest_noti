@@ -1,11 +1,11 @@
-import { CanActivate, Injectable } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { VaultsService } from './vaults.service';
 
 @Injectable()
 export class VaultAccessGuard implements CanActivate {
   constructor(private readonly vaultsService: VaultsService) {}
 
-  async canActivate(context: any): Promise<boolean> {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
 
     const userIdFromJwt = request.user.id;
