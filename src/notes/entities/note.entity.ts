@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsDate, IsNotEmpty, IsString } from 'class-validator';
-import { NoteBlock } from 'src/note-blocks/entities/note-block.entity';
+import { Block } from 'src/blocks/entities/block.entity';
 import { Vault } from 'src/vaults/entities/vault.entity';
 import {
   Column,
@@ -24,15 +24,18 @@ export class Note {
   @Column('text')
   title: string;
 
-  @OneToMany(() => NoteBlock, (contentBlock) => contentBlock.note, {
-    cascade: true,
-  })
-  contentBlocks: NoteBlock[];
+  @OneToMany(() => Block, (block) => block.note)
+  blocks: Block[];
 
   @ApiProperty()
   @IsDate()
   @Column('timestamp', { default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
+
+  @ApiProperty()
+  @IsDate()
+  @Column('timestamp', { default: () => 'CURRENT_TIMESTAMP' })
+  updatedAt: Date;
 
   @ApiProperty()
   @IsString()

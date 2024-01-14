@@ -2,14 +2,15 @@ import { ConflictException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Note } from './entities/note.entity';
-import { NoteBlocksService } from 'src/note-blocks/note-blocks.service';
+import { Block } from 'src/blocks/entities/block.entity';
 
 @Injectable()
 export class NotesService {
   constructor(
     @InjectRepository(Note)
     private notesRepository: Repository<Note>,
-    private noteBlocksService: NoteBlocksService,
+    @InjectRepository(Block)
+    private blocksRepository: Repository<Block>,
   ) {}
 
   async create(vaultId: string) {
@@ -20,9 +21,15 @@ export class NotesService {
       },
     });
 
-    const firstBlock = await this.noteBlocksService.create(savedNote.id);
+    const firstBlock = await this.blocksRepository.save({
+      note: {
+        id: savedNote.id,
+      },
+      content: '',
+      order: 0,
+    });
 
-    savedNote.contentBlocks = [firstBlock];
+    savedNote.blocks = [firstBlock];
 
     return savedNote;
   }
@@ -34,11 +41,6 @@ export class NotesService {
           id: vaultId,
         },
       },
-      select: {
-        id: true,
-        title: true,
-        createdAt: true,
-      },
     });
   }
 
@@ -47,11 +49,20 @@ export class NotesService {
       where: {
         id: noteId,
       },
-      relations: ['contentBlocks'],
+      relations: ['blocks'],
     });
   }
 
-  async update(noteId: string, newTitle: string, newContent: string) {
+  async findOneWithVault(noteId: string) {
+    return this.notesRepository.findOne({
+      where: {
+        id: noteId,
+      },
+      relations: ['vault'],
+    });
+  }
+
+  async update(noteId: string, newTitle: string, blocks: Block[]) {
     const existingNote = await this.notesRepository.findOne({
       where: {
         id: noteId,
@@ -65,7 +76,8 @@ export class NotesService {
     return this.notesRepository.save({
       ...existingNote,
       title: newTitle,
-      content: newContent,
+      blocks: blocks,
+      updatedAt: new Date(),
     });
   }
 
@@ -83,6 +95,25 @@ export class NotesService {
     return this.notesRepository.save({
       ...existingNote,
       title: newTitle,
+      updatedAt: new Date(),
+    });
+  }
+
+  async updateBlocks(noteId: string, blocks: Block[]) {
+    const existingNote = await this.notesRepository.findOne({
+      where: {
+        id: noteId,
+      },
+    });
+
+    if (!existingNote) {
+      throw new ConflictException('Note does not exist');
+    }
+
+    return this.notesRepository.save({
+      ...existingNote,
+      blocks: blocks,
+      updatedAt: new Date(),
     });
   }
 

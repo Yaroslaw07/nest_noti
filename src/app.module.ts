@@ -9,7 +9,7 @@ import { NotesModule } from './notes/notes.module';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { JwtStrategy } from './auth/strategies/jwt.strategy';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { NoteBlocksModule } from './note-blocks/note-blocks.module';
+import { BlocksModule } from './blocks/blocks.module';
 
 @Module({
   imports: [
@@ -25,7 +25,7 @@ import { NoteBlocksModule } from './note-blocks/note-blocks.module';
     UsersModule,
     VaultsModule,
     NotesModule,
-    NoteBlocksModule,
+    BlocksModule,
   ],
   controllers: [AppController],
   providers: [AppService, JwtAuthGuard, JwtStrategy],

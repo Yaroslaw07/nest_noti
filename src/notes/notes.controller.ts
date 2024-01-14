@@ -2,11 +2,11 @@ import {
   Controller,
   Get,
   Post,
-  Patch,
   Param,
   Delete,
   UseGuards,
   Body,
+  Put,
 } from '@nestjs/common';
 import { NotesService } from './notes.service';
 import { ApiBearerAuth, ApiHeader, ApiTags } from '@nestjs/swagger';
@@ -15,6 +15,8 @@ import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { UpdateNoteDto } from './dto/update-note.dto';
 import { VaultId } from 'src/vaults/vault.decorator';
 import { NotesGateway } from './notes.gateway';
+import { UpdateNoteTitleDto } from './dto/update-note-title.dto';
+import { UpdateNoteBlockDto } from './dto/update-note-block.dto';
 
 @Controller('notes')
 @UseGuards(JwtAuthGuard, VaultAccessGuard)
@@ -49,15 +51,15 @@ export class NotesController {
     return this.notesService.findOne(noteId);
   }
 
-  @Patch(':id')
+  @Put(':id')
   async update(
     @VaultId() vaultId: string,
     @Param('id') noteId: string,
-    @Body() updateNote: UpdateNoteDto,
+    @Body() updateNoteDto: UpdateNoteDto,
   ) {
-    const { title, content, isTitleUpdated } = updateNote;
+    const { title, blocks, isTitleUpdated } = updateNoteDto;
 
-    const updatedNote = await this.notesService.update(noteId, title, content);
+    const updatedNote = await this.notesService.update(noteId, title, blocks);
 
     this.notesGateway.server
       .to(vaultId)
@@ -66,17 +68,38 @@ export class NotesController {
     return updatedNote;
   }
 
-  @Patch(':id/title')
+  @Put(':id/title')
   async updateTitle(
     @VaultId() vaultId: string,
     @Param('id') noteId: string,
-    @Body() newTitle: string,
+    @Body() updatedNoteTitleDto: UpdateNoteTitleDto,
   ) {
+    const { title: newTitle } = updatedNoteTitleDto;
+
     const updatedNote = await this.notesService.updateTitle(noteId, newTitle);
 
-    this.notesGateway.server
-      .to(vaultId)
-      .emit('noteUpdated', { updatedNote, isTitleUpdated: true });
+    this.notesGateway.server.to(vaultId).emit('noteUpdated', {
+      updatedNote: updatedNote,
+      isTitleUpdated: true,
+    });
+
+    return updatedNote;
+  }
+
+  @Put(':id/blocks')
+  async updateBlocks(
+    @VaultId() vaultId: string,
+    @Param('id') noteId: string,
+    @Body() updatedNoteBlocksDto: UpdateNoteBlockDto,
+  ) {
+    const { blocks } = updatedNoteBlocksDto;
+
+    const updatedNote = await this.notesService.updateBlocks(noteId, blocks);
+
+    this.notesGateway.server.to(vaultId).emit('noteUpdated', {
+      updatedNote: updatedNote,
+      isTitleUpdated: false,
+    });
 
     return updatedNote;
   }

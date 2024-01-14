@@ -3,10 +3,10 @@ import {
   Post,
   Body,
   Get,
-  Patch,
   Delete,
   Param,
   UseGuards,
+  Put,
 } from '@nestjs/common';
 import { VaultsService } from './vaults.service';
 import { CreateVaultDto } from './dto/create-vault.dto';
@@ -33,7 +33,7 @@ export class VaultsController {
     return this.vaultsService.findAll(user.id);
   }
 
-  @Patch(':id')
+  @Put(':id')
   update(@Param('id') id: string, @Body() updateVaultDto: UpdateVaultDto) {
     return this.vaultsService.update(id, updateVaultDto);
   }

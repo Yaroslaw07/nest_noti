@@ -14,7 +14,7 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle('Noti Api')
-    .setDescription('The Noti API for the Noti application for creating notes')
+    .setDescription('The Noti API for managing powerful notes')
     .setVersion('0.1')
     .addBearerAuth()
     .build();
