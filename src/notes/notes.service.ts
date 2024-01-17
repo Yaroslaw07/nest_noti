@@ -73,6 +73,15 @@ export class NotesService {
       throw new ConflictException('Note does not exist');
     }
 
+    for (const block of blocks) {
+      await this.blocksRepository.save({
+        ...block,
+        note: {
+          id: noteId,
+        },
+      });
+    }
+
     return this.notesRepository.save({
       ...existingNote,
       title: newTitle,
@@ -108,6 +117,15 @@ export class NotesService {
 
     if (!existingNote) {
       throw new ConflictException('Note does not exist');
+    }
+
+    for (const block of blocks) {
+      await this.blocksRepository.save({
+        ...block,
+        note: {
+          id: noteId,
+        },
+      });
     }
 
     return this.notesRepository.save({
