@@ -47,15 +47,20 @@ export class BlocksController {
       createBlockDto.order,
     );
 
+    this.notesGateway.server.to(noteId).emit('newBlock', newBlock.id);
     return newBlock;
   }
 
   @Put(':blockId')
   async updateBlock(
+    @NoteId() noteId: string,
     @Param('blockId') blockId: string,
     @Body() updateBlockDto: UpdateBlockDto,
   ) {
     const { type, props } = updateBlockDto;
+
+    this.notesGateway.server.to(noteId).emit('updateBlock', updateBlockDto);
+
     return this.blocksService.updateBlock(blockId, type, props);
   }
 
@@ -68,7 +73,11 @@ export class BlocksController {
   // }
 
   @Delete(':blockId')
-  async deleteBlock(@Param('blockId') blockId: string) {
-    await this.blocksService.deleteBlock(blockId);
+  async deleteBlock(@NoteId() noteId, @Param('blockId') blockId: string) {
+    const deleteBlock = await this.blocksService.deleteBlock(blockId);
+
+    this.notesGateway.server.to(noteId).emit('deleteBlock', blockId);
+
+    return deleteBlock;
   }
 }

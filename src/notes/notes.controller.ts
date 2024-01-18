@@ -17,6 +17,8 @@ import { VaultId } from 'src/vaults/vault.decorator';
 import { NotesGateway } from './notes.gateway';
 import { UpdateNoteTitleDto } from './dto/update-note-title.dto';
 import { UpdateNoteBlockDto } from './dto/update-note-block.dto';
+import { getNoteRoom, getVaultRoom } from 'src/helpers/socket-room';
+import { VaultsGateway } from 'src/vaults/vaults.gateway';
 
 @Controller('notes')
 @UseGuards(JwtAuthGuard, VaultAccessGuard)
@@ -30,14 +32,18 @@ export class NotesController {
   constructor(
     private readonly notesService: NotesService,
     private notesGateway: NotesGateway,
+    private vaultsGateway: VaultsGateway,
   ) {}
 
   @Post()
   async create(@VaultId() vaultId: string) {
     const newNote = await this.notesService.create(vaultId);
 
-    this.notesGateway.server.to(vaultId).emit('newNote', newNote.id);
-
+    console.log(getVaultRoom(vaultId));
+    console.log(
+      await this.notesGateway.server.in(getVaultRoom(vaultId)).fetchSockets(),
+    );
+    this.vaultsGateway.server.to(getVaultRoom(vaultId)).emit('noteListUpdated');
     return newNote;
   }
 
@@ -62,8 +68,14 @@ export class NotesController {
     const updatedNote = await this.notesService.update(noteId, title, blocks);
 
     this.notesGateway.server
-      .to(vaultId)
-      .emit('noteUpdated', { updatedNote, isTitleUpdated });
+      .to(getNoteRoom(noteId))
+      .emit('noteUpdated', { updatedNote });
+
+    if (isTitleUpdated) {
+      this.vaultsGateway.server
+        .to(getVaultRoom(vaultId))
+        .emit('noteListUpdated');
+    }
 
     return updatedNote;
   }
@@ -78,10 +90,14 @@ export class NotesController {
 
     const updatedNote = await this.notesService.updateTitle(noteId, newTitle);
 
-    this.notesGateway.server.to(vaultId).emit('noteUpdated', {
+    this.notesGateway.server.to(getNoteRoom(noteId)).emit('titleUpdated', {
       updatedNote: updatedNote,
-      isTitleUpdated: true,
     });
+    this.vaultsGateway.server
+      .to(getVaultRoom(vaultId))
+      .emit('noteListUpdated', {
+        isTitleUpdated: true,
+      });
 
     return updatedNote;
   }
@@ -96,7 +112,7 @@ export class NotesController {
 
     const updatedNote = await this.notesService.updateBlocks(noteId, blocks);
 
-    this.notesGateway.server.to(vaultId).emit('noteUpdated', {
+    this.notesGateway.server.to(getNoteRoom(noteId)).emit('blocksUpdated', {
       updatedNote: updatedNote,
       isTitleUpdated: false,
     });
@@ -108,7 +124,7 @@ export class NotesController {
   async remove(@VaultId() vaultId: string, @Param('id') noteId: string) {
     const result = await this.notesService.remove(noteId);
 
-    this.notesGateway.server.to(vaultId).emit('noteDeleted', noteId);
+    this.vaultsGateway.server.to(getVaultRoom(vaultId)).emit('noteListUpdated');
 
     return result;
   }
