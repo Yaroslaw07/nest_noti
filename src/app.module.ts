@@ -6,10 +6,12 @@ import { UsersModule } from './users/users.module';
 import { VaultsModule } from './vaults/vaults.module';
 import { ConfigModule } from '@nestjs/config';
 import { NotesModule } from './notes/notes.module';
-import { JwtAuthGuard } from './auth/jwt-auth.guard';
+import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { JwtStrategy } from './auth/strategies/jwt.strategy';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BlocksModule } from './blocks/blocks.module';
+import { SocketService } from './socket/socket.service';
+import { SocketModule } from './socket/socket.module';
 
 @Module({
   imports: [
@@ -26,8 +28,9 @@ import { BlocksModule } from './blocks/blocks.module';
     VaultsModule,
     NotesModule,
     BlocksModule,
+    SocketModule,
   ],
   controllers: [AppController],
-  providers: [AppService, JwtAuthGuard, JwtStrategy],
+  providers: [AppService, JwtAuthGuard, JwtStrategy, SocketService],
 })
 export class AppModule {}

@@ -3,6 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Note } from './entities/note.entity';
 import { Block } from 'src/blocks/entities/block.entity';
+import { NotesGateway } from './notes.gateway';
+import { getNoteRoom } from 'src/helpers/socket-room';
 
 @Injectable()
 export class NotesService {
@@ -11,6 +13,8 @@ export class NotesService {
     private notesRepository: Repository<Note>,
     @InjectRepository(Block)
     private blocksRepository: Repository<Block>,
+
+    private readonly notesGateway: NotesGateway,
   ) {}
 
   async create(vaultId: string) {
@@ -147,5 +151,13 @@ export class NotesService {
     }
 
     return this.notesRepository.remove(existingNote);
+  }
+
+  async emitEventToNote(
+    noteId: string,
+    event: string,
+    payload: Record<string, any>,
+  ) {
+    this.notesGateway.server.to(getNoteRoom(noteId)).emit(event, payload);
   }
 }

@@ -9,13 +9,13 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiHeader, ApiTags } from '@nestjs/swagger';
-import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { NoteAccessGuard } from 'src/notes/note-access.guard';
-import { NotesGateway } from 'src/notes/notes.gateway';
 import { BlocksService } from './blocks.service';
 import { NoteId } from 'src/notes/note.decorator';
 import { CreateBlockDto } from './dto/create-block.dto';
 import { UpdateBlockDto } from './dto/update-block.dto';
+import { NotesService } from 'src/notes/notes.service';
 
 @Controller('blocks')
 @UseGuards(JwtAuthGuard, NoteAccessGuard)
@@ -32,7 +32,7 @@ import { UpdateBlockDto } from './dto/update-block.dto';
 export class BlocksController {
   constructor(
     private readonly blocksService: BlocksService,
-    private notesGateway: NotesGateway,
+    private readonly notesService: NotesService,
   ) {}
 
   @Get()
@@ -42,13 +42,18 @@ export class BlocksController {
 
   @Post()
   async create(@NoteId() noteId, @Body() createBlockDto: CreateBlockDto) {
-    const newBlock = await this.blocksService.create(
+    const createdBlock = await this.blocksService.create(
       noteId,
       createBlockDto.order,
     );
 
-    this.notesGateway.server.to(noteId).emit('newBlock', newBlock.id);
-    return newBlock;
+    await this.notesService.emitEventToNote(
+      noteId,
+      'block-created',
+      createdBlock,
+    );
+
+    return createdBlock;
   }
 
   @Put(':blockId')
@@ -59,9 +64,15 @@ export class BlocksController {
   ) {
     const { type, props } = updateBlockDto;
 
-    this.notesGateway.server.to(noteId).emit('updateBlock', updateBlockDto);
+    const updatedBlock = await this.blocksService.updateBlock(
+      blockId,
+      type,
+      props,
+    );
 
-    return this.blocksService.updateBlock(blockId, type, props);
+    this.notesService.emitEventToNote(noteId, 'block-updated', updatedBlock);
+
+    return updatedBlock;
   }
 
   // @Patch(':blockId/move/:newOrder')
@@ -74,10 +85,14 @@ export class BlocksController {
 
   @Delete(':blockId')
   async deleteBlock(@NoteId() noteId, @Param('blockId') blockId: string) {
-    const deleteBlock = await this.blocksService.deleteBlock(blockId);
+    const deletedBlock = await this.blocksService.deleteBlock(blockId);
 
-    this.notesGateway.server.to(noteId).emit('deleteBlock', blockId);
+    await this.notesService.emitEventToNote(
+      noteId,
+      'block-deleted',
+      deletedBlock,
+    );
 
-    return deleteBlock;
+    return deletedBlock;
   }
 }

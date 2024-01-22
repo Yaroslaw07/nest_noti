@@ -82,7 +82,7 @@ export class BlocksService {
   //   return this.blockRepository.save(block);
   // }
 
-  async deleteBlock(blockId: string): Promise<void> {
+  async deleteBlock(blockId: string) {
     const block = await this.blockRepository.findOne({
       where: { id: blockId },
       relations: ['note'],
@@ -97,7 +97,9 @@ export class BlocksService {
 
     await this.decreaseOrder(noteId, order);
 
-    await this.blockRepository.remove(block);
+    const deleteBlock = await this.blockRepository.remove(block);
+
+    return deleteBlock;
   }
 
   private async increaseOrder(

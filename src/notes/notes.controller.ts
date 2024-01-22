@@ -11,15 +11,12 @@ import {
 import { NotesService } from './notes.service';
 import { ApiBearerAuth, ApiHeader, ApiTags } from '@nestjs/swagger';
 import { VaultAccessGuard } from 'src/vaults/vault-access.guard';
-import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { UpdateNoteDto } from './dto/update-note.dto';
 import { VaultId } from 'src/vaults/vault.decorator';
-import { NotesGateway } from './notes.gateway';
 import { UpdateNoteTitleDto } from './dto/update-note-title.dto';
 import { UpdateNoteBlockDto } from './dto/update-note-block.dto';
-import { getNoteRoom, getVaultRoom } from 'src/helpers/socket-room';
-import { VaultsGateway } from 'src/vaults/vaults.gateway';
-
+import { VaultsService } from 'src/vaults/vaults.service';
 @Controller('notes')
 @UseGuards(JwtAuthGuard, VaultAccessGuard)
 @ApiTags('notes')
@@ -31,20 +28,20 @@ import { VaultsGateway } from 'src/vaults/vaults.gateway';
 export class NotesController {
   constructor(
     private readonly notesService: NotesService,
-    private notesGateway: NotesGateway,
-    private vaultsGateway: VaultsGateway,
+    private readonly vaultsService: VaultsService,
   ) {}
 
   @Post()
   async create(@VaultId() vaultId: string) {
-    const newNote = await this.notesService.create(vaultId);
+    const createdNote = await this.notesService.create(vaultId);
 
-    console.log(getVaultRoom(vaultId));
-    console.log(
-      await this.notesGateway.server.in(getVaultRoom(vaultId)).fetchSockets(),
+    await this.vaultsService.emitEventToVault(
+      'note-created',
+      vaultId,
+      createdNote,
     );
-    this.vaultsGateway.server.to(getVaultRoom(vaultId)).emit('noteListUpdated');
-    return newNote;
+
+    return createdNote;
   }
 
   @Get()
@@ -67,14 +64,16 @@ export class NotesController {
 
     const updatedNote = await this.notesService.update(noteId, title, blocks);
 
-    this.notesGateway.server
-      .to(getNoteRoom(noteId))
-      .emit('noteUpdated', { updatedNote });
+    await this.notesService.emitEventToNote('note-updated', noteId, {
+      updatedNote,
+    });
 
     if (isTitleUpdated) {
-      this.vaultsGateway.server
-        .to(getVaultRoom(vaultId))
-        .emit('noteListUpdated');
+      await this.vaultsService.emitEventToVault(
+        vaultId,
+        'noteInfos-updated',
+        updatedNote,
+      );
     }
 
     return updatedNote;
@@ -90,14 +89,15 @@ export class NotesController {
 
     const updatedNote = await this.notesService.updateTitle(noteId, newTitle);
 
-    this.notesGateway.server.to(getNoteRoom(noteId)).emit('titleUpdated', {
+    await this.notesService.emitEventToNote('noteTitle-updated', noteId, {
       updatedNote: updatedNote,
     });
-    this.vaultsGateway.server
-      .to(getVaultRoom(vaultId))
-      .emit('noteListUpdated', {
-        isTitleUpdated: true,
-      });
+
+    await this.vaultsService.emitEventToVault(
+      vaultId,
+      'noteInfos-updated',
+      updatedNote,
+    );
 
     return updatedNote;
   }
@@ -112,9 +112,8 @@ export class NotesController {
 
     const updatedNote = await this.notesService.updateBlocks(noteId, blocks);
 
-    this.notesGateway.server.to(getNoteRoom(noteId)).emit('blocksUpdated', {
+    await this.notesService.emitEventToNote('noteBlocks-updated', noteId, {
       updatedNote: updatedNote,
-      isTitleUpdated: false,
     });
 
     return updatedNote;
@@ -122,10 +121,14 @@ export class NotesController {
 
   @Delete(':id')
   async remove(@VaultId() vaultId: string, @Param('id') noteId: string) {
-    const result = await this.notesService.remove(noteId);
+    const deletedNote = await this.notesService.remove(noteId);
 
-    this.vaultsGateway.server.to(getVaultRoom(vaultId)).emit('noteListUpdated');
+    await this.vaultsService.emitEventToVault(
+      vaultId,
+      'note-deleted',
+      deletedNote,
+    );
 
-    return result;
+    return deletedNote;
   }
 }
