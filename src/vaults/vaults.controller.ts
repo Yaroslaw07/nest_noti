@@ -26,7 +26,7 @@ export class VaultsController {
   @Post()
   async create(@AuthUser() user: JwtPayload, @Body() { name }: CreateVaultDto) {
     const vault = await this.vaultsService.create(user.id, name);
-    await this.vaultsService.emitEventToVault('vault-created', vault.id, vault);
+    await this.vaultsService.emitEventToVault(vault.id, 'vault-created', vault);
     return vault;
   }
 
@@ -41,14 +41,14 @@ export class VaultsController {
     @Body() updateVaultDto: UpdateVaultDto,
   ) {
     const vault = await this.vaultsService.update(id, updateVaultDto);
-    await this.vaultsService.emitEventToVault('vault-updated', vault.id, vault);
+    await this.vaultsService.emitEventToVault(vault.id, 'vault-updated', vault);
     return vault;
   }
 
   @Delete(':id')
   async remove(@Param('id') id: string) {
     const vault = await this.vaultsService.remove(id);
-    await this.vaultsService.emitEventToVault('vault-deleted', vault.id, vault);
+    await this.vaultsService.emitEventToVault(vault.id, 'vault-deleted', vault);
     return vault;
   }
 }

@@ -24,8 +24,6 @@ export class VaultsGateway {
 
   @SubscribeMessage('joinVault')
   async handleEnterVault(client: Socket, vaultId: string) {
-    console.log(client.handshake.headers.user, 'joined vault', vaultId);
-    // console.log(client.id, 'joined vault', vaultId);
     client.join(getVaultRoom(vaultId));
   }
 }

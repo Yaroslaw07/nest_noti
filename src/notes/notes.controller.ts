@@ -36,8 +36,8 @@ export class NotesController {
     const createdNote = await this.notesService.create(vaultId);
 
     await this.vaultsService.emitEventToVault(
-      'note-created',
       vaultId,
+      'note-created',
       createdNote,
     );
 
@@ -64,7 +64,7 @@ export class NotesController {
 
     const updatedNote = await this.notesService.update(noteId, title, blocks);
 
-    await this.notesService.emitEventToNote('note-updated', noteId, {
+    await this.notesService.emitEventToNote(noteId, 'note-updated', {
       updatedNote,
     });
 
@@ -89,7 +89,7 @@ export class NotesController {
 
     const updatedNote = await this.notesService.updateTitle(noteId, newTitle);
 
-    await this.notesService.emitEventToNote('noteTitle-updated', noteId, {
+    await this.notesService.emitEventToNote(noteId, 'noteTitle-updated', {
       updatedNote: updatedNote,
     });
 
@@ -112,7 +112,7 @@ export class NotesController {
 
     const updatedNote = await this.notesService.updateBlocks(noteId, blocks);
 
-    await this.notesService.emitEventToNote('noteBlocks-updated', noteId, {
+    await this.notesService.emitEventToNote(noteId, 'noteBlocks-updated', {
       updatedNote: updatedNote,
     });
 
@@ -121,14 +121,10 @@ export class NotesController {
 
   @Delete(':id')
   async remove(@VaultId() vaultId: string, @Param('id') noteId: string) {
-    const deletedNote = await this.notesService.remove(noteId);
+    await this.notesService.remove(noteId);
 
-    await this.vaultsService.emitEventToVault(
-      vaultId,
-      'note-deleted',
-      deletedNote,
-    );
+    await this.vaultsService.emitEventToVault(vaultId, 'note-deleted', noteId);
 
-    return deletedNote;
+    return { id: noteId };
   }
 }
