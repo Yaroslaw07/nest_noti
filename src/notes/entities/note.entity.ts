@@ -42,6 +42,7 @@ export class Note {
   @IsNotEmpty()
   @ManyToOne(() => Vault, (vault) => vault.notes, {
     nullable: false,
+    onDelete: 'CASCADE',
     cascade: true,
   })
   vault: Vault;

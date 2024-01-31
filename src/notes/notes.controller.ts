@@ -8,7 +8,6 @@ import {
   Body,
   Put,
 } from '@nestjs/common';
-import { NotesService } from './notes.service';
 import { ApiBearerAuth, ApiHeader, ApiTags } from '@nestjs/swagger';
 import { VaultAccessGuard } from 'src/vaults/vault-access.guard';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
@@ -17,6 +16,9 @@ import { VaultId } from 'src/vaults/vault.decorator';
 import { UpdateNoteTitleDto } from './dto/update-note-title.dto';
 import { UpdateNoteBlockDto } from './dto/update-note-block.dto';
 import { VaultsService } from 'src/vaults/vaults.service';
+import { NOTE_EVENTS, NOTE_INFOS_EVENTS } from './note-events.helper';
+import { NotesService } from './services/notes.service';
+import { NotesSocketService } from './services/notes-socket.service';
 @Controller('notes')
 @UseGuards(JwtAuthGuard, VaultAccessGuard)
 @ApiTags('notes')
@@ -29,6 +31,8 @@ export class NotesController {
   constructor(
     private readonly notesService: NotesService,
     private readonly vaultsService: VaultsService,
+
+    private readonly notesSocketService: NotesSocketService,
   ) {}
 
   @Post()
@@ -37,7 +41,7 @@ export class NotesController {
 
     await this.vaultsService.emitEventToVault(
       vaultId,
-      'note-created',
+      NOTE_INFOS_EVENTS.NOTE_CREATED,
       createdNote,
     );
 
@@ -64,14 +68,18 @@ export class NotesController {
 
     const updatedNote = await this.notesService.update(noteId, title, blocks);
 
-    await this.notesService.emitEventToNote(noteId, 'note-updated', {
-      updatedNote,
-    });
+    await this.notesSocketService.emitEventToNote(
+      noteId,
+      NOTE_EVENTS.NOTE_UPDATED,
+      {
+        updatedNote,
+      },
+    );
 
     if (isTitleUpdated) {
       await this.vaultsService.emitEventToVault(
         vaultId,
-        'noteInfos-updated',
+        NOTE_INFOS_EVENTS.NOTE_INFOS_UPDATED,
         updatedNote,
       );
     }
@@ -89,13 +97,17 @@ export class NotesController {
 
     const updatedNote = await this.notesService.updateTitle(noteId, newTitle);
 
-    await this.notesService.emitEventToNote(noteId, 'noteTitle-updated', {
-      updatedNote: updatedNote,
-    });
+    await this.notesSocketService.emitEventToNote(
+      noteId,
+      NOTE_EVENTS.NOTE_TITLE_UPDATED,
+      {
+        title: updatedNote.title,
+      },
+    );
 
     await this.vaultsService.emitEventToVault(
       vaultId,
-      'noteInfos-updated',
+      NOTE_INFOS_EVENTS.NOTE_INFOS_UPDATED,
       updatedNote,
     );
 
@@ -112,9 +124,13 @@ export class NotesController {
 
     const updatedNote = await this.notesService.updateBlocks(noteId, blocks);
 
-    await this.notesService.emitEventToNote(noteId, 'noteBlocks-updated', {
-      updatedNote: updatedNote,
-    });
+    await this.notesSocketService.emitEventToNote(
+      noteId,
+      NOTE_EVENTS.NOTE_BLOCKS_UPDATED,
+      {
+        blocks: updatedNote.blocks,
+      },
+    );
 
     return updatedNote;
   }
@@ -123,7 +139,11 @@ export class NotesController {
   async remove(@VaultId() vaultId: string, @Param('id') noteId: string) {
     await this.notesService.remove(noteId);
 
-    await this.vaultsService.emitEventToVault(vaultId, 'note-deleted', noteId);
+    await this.vaultsService.emitEventToVault(
+      vaultId,
+      NOTE_INFOS_EVENTS.NOTE_DELETED,
+      noteId,
+    );
 
     return { id: noteId };
   }

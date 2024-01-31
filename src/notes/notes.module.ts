@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { NotesService } from './notes.service';
 import { NotesController } from './notes.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Note } from './entities/note.entity';
@@ -8,6 +7,8 @@ import { Block } from 'src/blocks/entities/block.entity';
 import { VaultsModule } from 'src/vaults/vaults.module';
 import { AuthModule } from 'src/auth/auth.module';
 import { SocketModule } from 'src/socket/socket.module';
+import { NotesService } from './services/notes.service';
+import { NotesSocketService } from './services/notes-socket.service';
 
 @Module({
   controllers: [NotesController],
@@ -18,7 +19,7 @@ import { SocketModule } from 'src/socket/socket.module';
     SocketModule,
     VaultsModule,
   ],
-  providers: [NotesService, NotesGateway],
-  exports: [NotesService, NotesGateway],
+  providers: [NotesService, NotesSocketService, NotesGateway],
+  exports: [NotesGateway, NotesService, NotesSocketService],
 })
 export class NotesModule {}
