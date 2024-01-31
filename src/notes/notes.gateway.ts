@@ -1,4 +1,5 @@
 import {
+  ConnectedSocket,
   MessageBody,
   SubscribeMessage,
   WebSocketGateway,
@@ -7,8 +8,9 @@ import {
 import { Server, Socket } from 'socket.io';
 import { getNoteRoom } from 'src/helpers/socket-room';
 import { SocketService } from 'src/socket/socket.service';
-import { NOTE_EVENTS } from './note-events.helper';
+import { NOTE_EVENTS, NOTE_INFOS_EVENTS } from './note-events.helper';
 import { NotesService } from './services/notes.service';
+import { VaultsGateway } from 'src/vaults/vaults.gateway';
 
 @WebSocketGateway({ cors: true, namespace: 'notes' })
 export class NotesGateway {
@@ -18,6 +20,7 @@ export class NotesGateway {
   constructor(
     private readonly socketService: SocketService,
     private readonly noteService: NotesService,
+    private readonly vaultsGateway: VaultsGateway,
   ) {}
 
   async afterInit() {
@@ -25,6 +28,7 @@ export class NotesGateway {
   }
 
   async handleConnection(client: Socket) {
+    console.log(client.handshake.headers);
     await this.socketService.handleConnection(client);
   }
 
@@ -38,15 +42,32 @@ export class NotesGateway {
     client.leave(getNoteRoom(noteId));
   }
 
-  @SubscribeMessage('hi')
-  async handleUpdateNoteTitle(@MessageBody() payload: any) {
-    const [noteId, newTitle] = payload;
+  @SubscribeMessage(NOTE_EVENTS.TO_UPDATE_NOTE_TITLE)
+  async handleUpdateNoteTitle(
+    @ConnectedSocket() client,
+    @MessageBody() payload: any,
+  ) {
+    const { noteId, newTitle } = payload;
+    const { vault_id } = client.handshake.headers;
+
     const updatedNote = await this.noteService.updateTitle(noteId, newTitle);
-    console.log('update note title', updatedNote);
-    this.server
-      .to(getNoteRoom(updatedNote.id))
-      .emit(NOTE_EVENTS.NOTE_TITLE_UPDATED, {
-        title: updatedNote.title,
-      });
+
+    this.emitEventToNote(noteId, NOTE_EVENTS.NOTE_TITLE_UPDATED, {
+      title: updatedNote.title,
+    });
+
+    this.vaultsGateway.emitEventToVault(
+      vault_id,
+      NOTE_INFOS_EVENTS.NOTE_INFOS_UPDATED,
+      updatedNote,
+    );
+  }
+
+  async emitEventToNote(
+    noteId: string,
+    event: string,
+    payload: Record<string, any>,
+  ) {
+    this.server.to(getNoteRoom(noteId)).emit(event, payload);
   }
 }

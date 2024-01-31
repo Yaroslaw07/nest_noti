@@ -15,18 +15,22 @@ import { JwtPayload } from 'src/auth/dto/jwt-payload';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { UpdateVaultDto } from './dto/update-vault.dto';
+import { VaultsGateway } from './vaults.gateway';
 
 @Controller('vaults')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @ApiTags('vaults')
 export class VaultsController {
-  constructor(private readonly vaultsService: VaultsService) {}
+  constructor(
+    private readonly vaultsService: VaultsService,
+    private readonly vaultsGateway: VaultsGateway,
+  ) {}
 
   @Post()
   async create(@AuthUser() user: JwtPayload, @Body() { name }: CreateVaultDto) {
     const vault = await this.vaultsService.create(user.id, name);
-    await this.vaultsService.emitEventToVault(vault.id, 'vault-created', vault);
+    await this.vaultsGateway.emitEventToVault(vault.id, 'vault-created', vault);
     return vault;
   }
 
@@ -41,14 +45,14 @@ export class VaultsController {
     @Body() updateVaultDto: UpdateVaultDto,
   ) {
     const vault = await this.vaultsService.update(id, updateVaultDto);
-    await this.vaultsService.emitEventToVault(vault.id, 'vault-updated', vault);
+    await this.vaultsGateway.emitEventToVault(vault.id, 'vault-updated', vault);
     return vault;
   }
 
   @Delete(':id')
   async remove(@Param('id') id: string) {
     const vault = await this.vaultsService.remove(id);
-    await this.vaultsService.emitEventToVault(vault.id, 'vault-deleted', vault);
+    await this.vaultsGateway.emitEventToVault(vault.id, 'vault-deleted', vault);
     return vault;
   }
 }

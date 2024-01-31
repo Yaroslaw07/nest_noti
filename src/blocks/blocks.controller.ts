@@ -15,7 +15,7 @@ import { BlocksService } from './blocks.service';
 import { NoteId } from 'src/notes/note.decorator';
 import { CreateBlockDto } from './dto/create-block.dto';
 import { UpdateBlockDto } from './dto/update-block.dto';
-import { NotesSocketService } from 'src/notes/services/notes-socket.service';
+import { NotesGateway } from 'src/notes/notes.gateway';
 
 @Controller('blocks')
 @UseGuards(JwtAuthGuard, NoteAccessGuard)
@@ -32,7 +32,7 @@ import { NotesSocketService } from 'src/notes/services/notes-socket.service';
 export class BlocksController {
   constructor(
     private readonly blocksService: BlocksService,
-    private readonly notesSocketService: NotesSocketService,
+    private readonly notesGateway: NotesGateway,
   ) {}
 
   @Get()
@@ -47,7 +47,7 @@ export class BlocksController {
       createBlockDto.order,
     );
 
-    await this.notesSocketService.emitEventToNote(
+    await this.notesGateway.emitEventToNote(
       noteId,
       'block-created',
       createdBlock,
@@ -70,11 +70,7 @@ export class BlocksController {
       props,
     );
 
-    this.notesSocketService.emitEventToNote(
-      noteId,
-      'block-updated',
-      updatedBlock,
-    );
+    this.notesGateway.emitEventToNote(noteId, 'block-updated', updatedBlock);
 
     return updatedBlock;
   }
@@ -91,7 +87,7 @@ export class BlocksController {
   async deleteBlock(@NoteId() noteId, @Param('blockId') blockId: string) {
     const deletedBlock = await this.blocksService.deleteBlock(blockId);
 
-    await this.notesSocketService.emitEventToNote(
+    await this.notesGateway.emitEventToNote(
       noteId,
       'block-deleted',
       deletedBlock,

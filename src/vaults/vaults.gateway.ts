@@ -26,4 +26,12 @@ export class VaultsGateway {
   async handleEnterVault(client: Socket, vaultId: string) {
     client.join(getVaultRoom(vaultId));
   }
+
+  async emitEventToVault(
+    vaultId: string,
+    event: string,
+    payload: Record<string, any>,
+  ) {
+    this.server.to(getVaultRoom(vaultId)).emit(event, payload);
+  }
 }
