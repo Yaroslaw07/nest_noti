@@ -44,13 +44,19 @@ export class NotesService {
     });
   }
 
-  findOne(noteId: string) {
-    return this.notesRepository.findOne({
+  async findOne(noteId: string) {
+    const note = await this.notesRepository.findOne({
       where: {
         id: noteId,
       },
       relations: ['blocks'],
     });
+
+    if (!note) {
+      throw new ConflictException('Note does not exist');
+    }
+
+    return note;
   }
 
   async findOneWithVault(noteId: string) {

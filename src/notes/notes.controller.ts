@@ -15,10 +15,10 @@ import { UpdateNoteDto } from './dto/update-note.dto';
 import { VaultId } from 'src/vaults/vault.decorator';
 import { UpdateNoteTitleDto } from './dto/update-note-title.dto';
 import { UpdateNoteBlockDto } from './dto/update-note-block.dto';
-import { VaultsService } from 'src/vaults/vaults.service';
 import { NOTE_EVENTS, NOTE_INFOS_EVENTS } from './note-events.helper';
 import { NotesService } from './services/notes.service';
-import { NotesSocketService } from './services/notes-socket.service';
+import { NotesGateway } from './notes.gateway';
+import { VaultsGateway } from 'src/vaults/vaults.gateway';
 @Controller('notes')
 @UseGuards(JwtAuthGuard, VaultAccessGuard)
 @ApiTags('notes')
@@ -30,16 +30,16 @@ import { NotesSocketService } from './services/notes-socket.service';
 export class NotesController {
   constructor(
     private readonly notesService: NotesService,
-    private readonly vaultsService: VaultsService,
+    private readonly vaultsGateway: VaultsGateway,
 
-    private readonly notesSocketService: NotesSocketService,
+    private readonly notesGateway: NotesGateway,
   ) {}
 
   @Post()
   async create(@VaultId() vaultId: string) {
     const createdNote = await this.notesService.create(vaultId);
 
-    await this.vaultsService.emitEventToVault(
+    await this.vaultsGateway.emitEventToVault(
       vaultId,
       NOTE_INFOS_EVENTS.NOTE_CREATED,
       createdNote,
@@ -68,16 +68,12 @@ export class NotesController {
 
     const updatedNote = await this.notesService.update(noteId, title, blocks);
 
-    await this.notesSocketService.emitEventToNote(
-      noteId,
-      NOTE_EVENTS.NOTE_UPDATED,
-      {
-        updatedNote,
-      },
-    );
+    await this.notesGateway.emitEventToNote(noteId, NOTE_EVENTS.NOTE_UPDATED, {
+      updatedNote,
+    });
 
     if (isTitleUpdated) {
-      await this.vaultsService.emitEventToVault(
+      await this.vaultsGateway.emitEventToVault(
         vaultId,
         NOTE_INFOS_EVENTS.NOTE_INFOS_UPDATED,
         updatedNote,
@@ -97,7 +93,7 @@ export class NotesController {
 
     const updatedNote = await this.notesService.updateTitle(noteId, newTitle);
 
-    await this.notesSocketService.emitEventToNote(
+    await this.notesGateway.emitEventToNote(
       noteId,
       NOTE_EVENTS.NOTE_TITLE_UPDATED,
       {
@@ -105,7 +101,7 @@ export class NotesController {
       },
     );
 
-    await this.vaultsService.emitEventToVault(
+    await this.vaultsGateway.emitEventToVault(
       vaultId,
       NOTE_INFOS_EVENTS.NOTE_INFOS_UPDATED,
       updatedNote,
@@ -124,7 +120,7 @@ export class NotesController {
 
     const updatedNote = await this.notesService.updateBlocks(noteId, blocks);
 
-    await this.notesSocketService.emitEventToNote(
+    await this.notesGateway.emitEventToNote(
       noteId,
       NOTE_EVENTS.NOTE_BLOCKS_UPDATED,
       {
@@ -139,10 +135,12 @@ export class NotesController {
   async remove(@VaultId() vaultId: string, @Param('id') noteId: string) {
     await this.notesService.remove(noteId);
 
-    await this.vaultsService.emitEventToVault(
+    await this.vaultsGateway.emitEventToVault(
       vaultId,
       NOTE_INFOS_EVENTS.NOTE_DELETED,
-      noteId,
+      {
+        id: noteId,
+      },
     );
 
     return { id: noteId };

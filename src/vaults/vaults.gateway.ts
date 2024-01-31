@@ -24,6 +24,15 @@ export class VaultsGateway {
 
   @SubscribeMessage('joinVault')
   async handleEnterVault(client: Socket, vaultId: string) {
+    client.handshake.headers.vault_id = vaultId;
     client.join(getVaultRoom(vaultId));
+  }
+
+  async emitEventToVault(
+    vaultId: string,
+    event: string,
+    payload: Record<string, any>,
+  ) {
+    this.server.to(getVaultRoom(vaultId)).emit(event, payload);
   }
 }
