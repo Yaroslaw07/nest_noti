@@ -10,7 +10,6 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { JwtStrategy } from './auth/strategies/jwt.strategy';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BlocksModule } from './blocks/blocks.module';
-import { SocketService } from './socket/socket.service';
 import { SocketModule } from './socket/socket.module';
 
 @Module({
@@ -31,6 +30,6 @@ import { SocketModule } from './socket/socket.module';
     SocketModule,
   ],
   controllers: [AppController],
-  providers: [AppService, JwtAuthGuard, JwtStrategy, SocketService],
+  providers: [AppService, JwtAuthGuard, JwtStrategy],
 })
 export class AppModule {}

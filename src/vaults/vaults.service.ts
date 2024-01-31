@@ -4,7 +4,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Vault } from './entities/vault.entity';
 import { Repository } from 'typeorm';
 import { VaultsGateway } from './vaults.gateway';
-import { getVaultRoom } from 'src/helpers/socket-room';
 
 @Injectable()
 export class VaultsService {
@@ -99,9 +98,5 @@ export class VaultsService {
     }
 
     return vault.owner.id === userId;
-  }
-
-  public async emitEventToVault(vaultId: string, event: string, data: any) {
-    this.vaultsGateway.server.to(getVaultRoom(vaultId)).emit(event, data);
   }
 }

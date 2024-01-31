@@ -6,7 +6,7 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { getNoteRoom } from 'src/helpers/socket-room';
+import { getNoteRoom } from 'src/socket/socket-room.helper';
 import { SocketService } from 'src/socket/socket.service';
 import { NOTE_EVENTS, NOTE_INFOS_EVENTS } from './note-events.helper';
 import { NotesService } from './services/notes.service';
@@ -20,6 +20,7 @@ export class NotesGateway {
   constructor(
     private readonly socketService: SocketService,
     private readonly noteService: NotesService,
+
     private readonly vaultsGateway: VaultsGateway,
   ) {}
 
@@ -35,11 +36,13 @@ export class NotesGateway {
   @SubscribeMessage(NOTE_EVENTS.JOIN_NOTE_ROOM)
   handleJoinNoteRoom(client: Socket, noteId: string) {
     client.join(getNoteRoom(noteId));
+    client.handshake.headers.note_id = noteId;
   }
 
   @SubscribeMessage(NOTE_EVENTS.LEAVE_NOTE_ROOM)
   handleLeaveNoteRoom(client: Socket, noteId: string) {
     client.leave(getNoteRoom(noteId));
+    client.handshake.headers.note_id = null;
   }
 
   @SubscribeMessage(NOTE_EVENTS.TO_UPDATE_NOTE_TITLE)

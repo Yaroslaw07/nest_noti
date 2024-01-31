@@ -16,6 +16,7 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { UpdateVaultDto } from './dto/update-vault.dto';
 import { VaultsGateway } from './vaults.gateway';
+import { VAULT_EVENTS } from './vault-events.helper';
 
 @Controller('vaults')
 @ApiBearerAuth()
@@ -30,7 +31,11 @@ export class VaultsController {
   @Post()
   async create(@AuthUser() user: JwtPayload, @Body() { name }: CreateVaultDto) {
     const vault = await this.vaultsService.create(user.id, name);
-    await this.vaultsGateway.emitEventToVault(vault.id, 'vault-created', vault);
+    await this.vaultsGateway.emitEventToVault(
+      vault.id,
+      VAULT_EVENTS.VAULT_CREATED,
+      vault,
+    );
     return vault;
   }
 
@@ -45,14 +50,22 @@ export class VaultsController {
     @Body() updateVaultDto: UpdateVaultDto,
   ) {
     const vault = await this.vaultsService.update(id, updateVaultDto);
-    await this.vaultsGateway.emitEventToVault(vault.id, 'vault-updated', vault);
+    await this.vaultsGateway.emitEventToVault(
+      vault.id,
+      VAULT_EVENTS.VAULT_UPDATED,
+      vault,
+    );
     return vault;
   }
 
   @Delete(':id')
   async remove(@Param('id') id: string) {
     const vault = await this.vaultsService.remove(id);
-    await this.vaultsGateway.emitEventToVault(vault.id, 'vault-deleted', vault);
+    await this.vaultsGateway.emitEventToVault(
+      vault.id,
+      VAULT_EVENTS.VAULT_DELETED,
+      vault,
+    );
     return vault;
   }
 }

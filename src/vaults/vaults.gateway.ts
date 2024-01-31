@@ -4,8 +4,9 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { getVaultRoom } from 'src/helpers/socket-room';
+import { getVaultRoom } from 'src/socket/socket-room.helper';
 import { SocketService } from 'src/socket/socket.service';
+import { VAULT_EVENTS } from './vault-events.helper';
 
 @WebSocketGateway({ cors: true, namespace: 'vaults' })
 export class VaultsGateway {
@@ -22,10 +23,16 @@ export class VaultsGateway {
     await this.socketService.handleConnection(client);
   }
 
-  @SubscribeMessage('joinVault')
+  @SubscribeMessage(VAULT_EVENTS.JOIN_VAULT_ROOM)
   async handleEnterVault(client: Socket, vaultId: string) {
     client.handshake.headers.vault_id = vaultId;
     client.join(getVaultRoom(vaultId));
+  }
+
+  @SubscribeMessage(VAULT_EVENTS.LEAVE_VAULT_ROOM)
+  async handleLeaveVault(client: Socket, vaultId: string) {
+    client.leave(getVaultRoom(vaultId));
+    client.handshake.headers.vault_id = null;
   }
 
   async emitEventToVault(
