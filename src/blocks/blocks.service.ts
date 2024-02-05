@@ -32,7 +32,14 @@ export class BlocksService {
 
     await this.increaseOrder(noteId, order);
 
-    const block = this.blockRepository.create({ note: { id: noteId }, order });
+    const block = this.blockRepository.create({
+      note: { id: noteId },
+      order,
+      type: 'text',
+      props: {
+        text: '',
+      },
+    });
 
     return this.blockRepository.save(block);
   }
@@ -49,6 +56,22 @@ export class BlocksService {
     }
 
     block.type = newType;
+    block.props = newProps;
+
+    return this.blockRepository.save(block);
+  }
+
+  async updateBlocksProps(blockId: string, newProps: string) {
+    const block = await this.blockRepository.findOne({
+      where: {
+        id: blockId,
+      },
+    });
+
+    if (!block) {
+      throw new NotFoundException(`Block with ID ${blockId} not found.`);
+    }
+
     block.props = newProps;
 
     return this.blockRepository.save(block);

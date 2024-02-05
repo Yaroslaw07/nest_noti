@@ -5,9 +5,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { BlocksController } from './blocks.controller';
 import { NotesModule } from 'src/notes/notes.module';
 import { VaultsModule } from 'src/vaults/vaults.module';
+import { BlocksGateway } from './blocks.gateway';
 
 @Module({
-  providers: [BlocksService],
+  providers: [BlocksService, BlocksGateway],
   imports: [TypeOrmModule.forFeature([Block]), NotesModule, VaultsModule],
   controllers: [BlocksController],
 })

@@ -43,12 +43,12 @@ export class NotesGateway {
     @ConnectedSocket() client,
     @MessageBody() payload: any,
   ) {
-    const { noteId, newTitle } = payload;
-    const { vault_id } = client.handshake.headers;
+    const { newTitle } = payload;
+    const { vault_id, note_id } = client.handshake.headers;
 
-    const updatedNote = await this.noteService.updateTitle(noteId, newTitle);
+    const updatedNote = await this.noteService.updateTitle(note_id, newTitle);
 
-    this.emitEventToNote(noteId, NOTE_EVENTS.NOTE_TITLE_UPDATED, {
+    this.emitEventToNote(note_id, NOTE_EVENTS.NOTE_TITLE_UPDATED, {
       title: updatedNote.title,
     });
 
