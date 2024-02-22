@@ -50,22 +50,26 @@ export class VaultsController {
     @Body() updateVaultDto: UpdateVaultDto,
   ) {
     const vault = await this.vaultsService.update(id, updateVaultDto);
+
     await this.vaultsGateway.emitEventToVault(
       vault.id,
       VAULT_EVENTS.VAULT_UPDATED,
       vault,
     );
+
     return vault;
   }
 
   @Delete(':id')
   async remove(@Param('id') id: string) {
     const vault = await this.vaultsService.remove(id);
+
     await this.vaultsGateway.emitEventToVault(
-      vault.id,
+      id,
       VAULT_EVENTS.VAULT_DELETED,
-      vault,
+      null,
     );
+
     return vault;
   }
 }

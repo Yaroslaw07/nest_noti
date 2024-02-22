@@ -27,7 +27,6 @@ export class NotesGateway {
 
   @SubscribeMessage(NOTE_EVENTS.JOIN_NOTE_ROOM)
   handleJoinNoteRoom(client: Socket, noteId: string) {
-    console.log('noteId', noteId);
     client.join(getNoteRoom(noteId));
     client.handshake.headers.note_id = noteId;
   }
@@ -50,6 +49,27 @@ export class NotesGateway {
 
     this.emitEventToNote(note_id, NOTE_EVENTS.NOTE_TITLE_UPDATED, {
       title: updatedNote.title,
+    });
+
+    this.vaultsGateway.emitEventToVault(
+      vault_id,
+      NOTE_INFOS_EVENTS.NOTE_INFOS_UPDATED,
+      updatedNote,
+    );
+  }
+
+  @SubscribeMessage(NOTE_EVENTS.TO_UPDATE_NOTE_PIN)
+  async handleUpdateNotePin(
+    @ConnectedSocket() client,
+    @MessageBody() payload: any,
+  ) {
+    const { pinned } = payload;
+    const { vault_id, note_id } = client.handshake.headers;
+
+    const updatedNote = await this.noteService.updatePin(note_id, pinned);
+
+    this.emitEventToNote(note_id, NOTE_EVENTS.NOTE_PIN_UPDATED, {
+      pinned: updatedNote.pinned,
     });
 
     this.vaultsGateway.emitEventToVault(

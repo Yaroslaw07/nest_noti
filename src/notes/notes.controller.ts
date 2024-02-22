@@ -7,6 +7,7 @@ import {
   UseGuards,
   Body,
   Put,
+  Patch,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiHeader, ApiTags } from '@nestjs/swagger';
 import { VaultAccessGuard } from 'src/vaults/vault-access.guard';
@@ -19,6 +20,7 @@ import { NOTE_EVENTS, NOTE_INFOS_EVENTS } from './note-events.helper';
 import { NotesService } from './services/notes.service';
 import { NotesGateway } from './notes.gateway';
 import { VaultsGateway } from 'src/vaults/vaults.gateway';
+
 @Controller('notes')
 @UseGuards(JwtAuthGuard, VaultAccessGuard)
 @ApiTags('notes')
@@ -144,5 +146,32 @@ export class NotesController {
     );
 
     return { id: noteId };
+  }
+
+  @Patch(':id/pin')
+  async updatePin(
+    @VaultId() vaultId: string,
+    @Param('id') noteId: string,
+    @Body() updatedNotePinDto: { pinned: boolean },
+  ) {
+    const { pinned: isPinned } = updatedNotePinDto;
+
+    const updatedNote = await this.notesService.updatePin(noteId, isPinned);
+
+    await this.notesGateway.emitEventToNote(
+      noteId,
+      NOTE_EVENTS.NOTE_PIN_UPDATED,
+      {
+        isPinned: updatedNote.pinned,
+      },
+    );
+
+    await this.vaultsGateway.emitEventToVault(
+      vaultId,
+      NOTE_INFOS_EVENTS.NOTE_INFOS_UPDATED,
+      updatedNote,
+    );
+
+    return updatedNote;
   }
 }

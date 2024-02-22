@@ -1,4 +1,8 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Note } from '../entities/note.entity';
@@ -153,5 +157,14 @@ export class NotesService {
     }
 
     return this.notesRepository.remove(existingNote);
+  }
+
+  async updatePin(noteId: string, isPinned: boolean): Promise<Note> {
+    const note = await this.notesRepository.findOne({ where: { id: noteId } });
+    if (!note) {
+      throw new NotFoundException('Note not found');
+    }
+    note.pinned = isPinned;
+    return await this.notesRepository.save(note);
   }
 }

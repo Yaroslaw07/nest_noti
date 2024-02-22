@@ -6,6 +6,8 @@
     "**/CVS": true,
     "**/.DS_Store": true,
     "**/Thumbs.db": true,
-    "**/node_modules": false
-  }
+    "**/node_modules": true
+  },
+  "a-file-icon-vscode.opacity": 1,
+  "a-file-icon-vscode.activeIconPacks": ["nest", "react", "rails"]
 }

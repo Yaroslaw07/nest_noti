@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsDate, IsNotEmpty, IsString } from 'class-validator';
+import { IsBoolean, IsDate, IsNotEmpty, IsString } from 'class-validator';
 import { Block } from 'src/blocks/entities/block.entity';
 import { Vault } from 'src/vaults/entities/vault.entity';
 import {
@@ -36,6 +36,11 @@ export class Note {
   @IsDate()
   @Column('timestamp', { default: () => 'CURRENT_TIMESTAMP' })
   updatedAt: Date;
+
+  @ApiProperty()
+  @IsBoolean()
+  @Column('boolean', { default: false })
+  pinned: boolean;
 
   @ApiProperty()
   @IsString()

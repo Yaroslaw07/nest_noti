@@ -26,12 +26,10 @@ export class BlocksGateway {
 
   @SubscribeMessage(BLOCK_EVENTS.TO_CREATE_BLOCK)
   async createBlock(@ConnectedSocket() client, @MessageBody() payload: any) {
-    console.log('hu');
     const { order } = payload;
     const { note_id } = client.handshake.headers;
 
     const createdBlock = await this.blockService.create(note_id, order);
-    console.log('createdBlock', createdBlock);
     this.notesGateway.emitEventToNote(note_id, BLOCK_EVENTS.BLOCK_CREATED, {
       createdBlock,
       senderId: client.id,
@@ -43,7 +41,6 @@ export class BlocksGateway {
     @ConnectedSocket() client,
     @MessageBody() payload: any,
   ) {
-    console.log('here', payload);
     const { blockId, newProps } = payload;
     const { note_id } = client.handshake.headers;
 
@@ -51,11 +48,6 @@ export class BlocksGateway {
       blockId,
       newProps,
     );
-
-    console.log('updatedBlock', {
-      blockId: updatedBlock.id,
-      newProps: updatedBlock.props,
-    });
 
     this.notesGateway.emitEventToNote(
       note_id,
