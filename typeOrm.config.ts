@@ -9,6 +9,6 @@ const configService = new ConfigService();
 export default new DataSource({
   type: 'postgres',
   url: configService.get('DATABASE_URL'),
-  entities: ['./src/**/*.entity.js'],
-  migrations: ['./migrations/*.ts'],
+  entities: ['dist/src/**/*.entity.js'],
+  migrations: ['dist/migrations/*.js'],
 });

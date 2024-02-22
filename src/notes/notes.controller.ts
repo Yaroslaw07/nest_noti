@@ -162,7 +162,7 @@ export class NotesController {
       noteId,
       NOTE_EVENTS.NOTE_PIN_UPDATED,
       {
-        isPinned: updatedNote.pinned,
+        pinned: updatedNote.pinned,
       },
     );
 
