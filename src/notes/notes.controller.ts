@@ -14,6 +14,8 @@ import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { VaultId } from 'src/vaults/vault.decorator';
 import { UpdateNoteInfoDto } from './dto/update-note-info.dto';
 import { NotesService } from './notes.service';
+import { NotesGateway } from './notes.gateway';
+import { NOTE_BATCH_EVENTS } from './note-events.helper';
 
 @Controller('notes')
 @UseGuards(JwtAuthGuard, VaultAccessGuard)
@@ -24,7 +26,10 @@ import { NotesService } from './notes.service';
   required: true,
 })
 export class NotesController {
-  constructor(private readonly notesService: NotesService) {}
+  constructor(
+    private readonly notesService: NotesService,
+    private readonly notesGateway: NotesGateway,
+  ) {}
 
   @Get()
   findAll(@VaultId() vaultId: string) {
@@ -49,9 +54,26 @@ export class NotesController {
     @Param('id') noteId: string,
     @Body() updatedNoteInfoDto: UpdateNoteInfoDto,
   ) {
+    const timeStamp = new Date().getTime();
+
     const updatedNote = await this.notesService.updateNoteInfo(
       noteId,
       updatedNoteInfoDto,
+    );
+
+    this.notesGateway.emitEventToNote(
+      noteId,
+      NOTE_BATCH_EVENTS.NOTE_INFO_UPDATED_BATCH,
+      {
+        batchChanges: [
+          {
+            type: NOTE_BATCH_EVENTS.NOTE_INFO_UPDATED_BATCH,
+            data: updatedNoteInfoDto,
+            timeStamp: timeStamp,
+          },
+        ],
+        timeStamp: timeStamp,
+      },
     );
 
     return updatedNote;

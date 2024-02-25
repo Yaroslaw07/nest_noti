@@ -28,15 +28,22 @@ export class BatchGateway {
     const noteId = socket.handshake.headers.note_id as string;
 
     if (!noteId) {
-      return null;
+      console.error('Note ID missing in headers');
+      return { error: 'Note ID missing in headers' };
     }
 
-    const result = await this.batchService.executeBatch(noteId, payload);
-
-    this.notesGateway.emitEventToNote(
-      noteId,
-      NOTE_SOCKET_EVENTS.TO_BATCH_UPDATE_NOTE,
-      result,
-    );
+    try {
+      const result = await this.batchService.executeBatch(noteId, payload);
+      this.notesGateway.emitEventToNoteExceptClient(
+        noteId,
+        NOTE_SOCKET_EVENTS.UPDATED_BATCH_NOTE,
+        result,
+        socket.id,
+      );
+      return result;
+    } catch (error) {
+      console.error('Error executing batch:', error);
+      return { error: 'Error executing batch' };
+    }
   }
 }

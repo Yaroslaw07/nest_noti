@@ -10,5 +10,6 @@ export class UpdateBlockDto {
 
   @ApiProperty()
   @IsNotEmpty()
+  @IsOptional()
   props: any;
 }

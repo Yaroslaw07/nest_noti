@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsArray, IsNotEmpty, ValidateNested } from 'class-validator';
-import { BatchUnit } from './batch-change.dto';
+import { BatchUnit } from './batch-unit.dto';
 
 export class BatchRequestDto {
   @ApiProperty()

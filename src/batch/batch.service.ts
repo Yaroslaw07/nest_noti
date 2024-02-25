@@ -24,35 +24,38 @@ export class BatchService {
     const { batchChanges, timeStamp } = batchDto;
     batchChanges.sort((a, b) => a.timeStamp - b.timeStamp);
 
-    try {
-      this.entityManager.transaction(async (entityManager) => {
+    await this.entityManager.transaction(async (entityManager) => {
+      try {
         for (const change of batchChanges) {
           let eventType: string = change.type;
           let blockId: string | undefined;
 
           if (
             change.type.startsWith(
-              NOTE_BATCH_EVENTS.NOTE_BLOCK_TYPE_UPDATED_BATCH,
+              NOTE_BATCH_EVENTS.NOTE_BLOCK_UPDATED_BATCH,
             ) ||
             change.type.startsWith(NOTE_BATCH_EVENTS.NOTE_BLOCK_DELETED_BATCH)
           ) {
-            const [eventBaseType, extractedBlockId] = change.type.split('-');
+            const [eventBaseType, extractedBlockId] = change.type.split('_');
             eventType = eventBaseType || change.type;
             blockId = extractedBlockId;
           }
 
-          this.batchUpdateHandler(
+          const data = await this.batchUpdateHandler(
             eventType,
             change.data,
             entityManager,
             blockId ? blockId : noteId,
           );
+
+          processedChanges.push({ type: eventType, data });
         }
-        return { processedChanges, timeStamp };
-      });
-    } catch (error) {
-      return new ConflictException('Error while processing batch changes');
-    }
+      } catch (error) {
+        throw error;
+      }
+    });
+
+    return { processedChanges, timeStamp };
   }
 
   async batchUpdateHandler(
@@ -61,17 +64,19 @@ export class BatchService {
     entityManager: EntityManager,
     identifier: string,
   ) {
+    console.log(event);
+
     switch (event) {
       case NOTE_BATCH_EVENTS.NOTE_INFO_UPDATED_BATCH:
         return await this.batchUpdateNoteInfo(identifier, data, entityManager);
       case NOTE_BATCH_EVENTS.NOTE_BLOCK_CREATED_BATCH:
         return await this.batchCreateBlock(identifier, data, entityManager);
-      case NOTE_BATCH_EVENTS.NOTE_BLOCK_TYPE_UPDATED_BATCH:
+      case NOTE_BATCH_EVENTS.NOTE_BLOCK_UPDATED_BATCH:
         return await this.batchUpdateBlock(identifier, data, entityManager);
       case NOTE_BATCH_EVENTS.NOTE_BLOCK_DELETED_BATCH:
         return await this.batchDeleteBlock(identifier, entityManager);
       default:
-        return new ConflictException('Invalid batch event type');
+        throw new ConflictException('Invalid batch event type:' + event);
     }
   }
 

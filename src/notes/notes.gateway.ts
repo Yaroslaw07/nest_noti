@@ -5,19 +5,12 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { getNoteRoom } from 'src/socket/socket-room.helper';
-import { NotesService } from './notes.service';
-import { VaultsGateway } from 'src/vaults/vaults.gateway';
 import { NOTE_SOCKET_EVENTS } from './note-events.helper';
 
 @WebSocketGateway({ cors: true })
 export class NotesGateway {
   @WebSocketServer()
   server: Server;
-
-  constructor(
-    private readonly noteService: NotesService,
-    private readonly vaultsGateway: VaultsGateway,
-  ) {}
 
   async afterInit() {
     console.log('Note socket initialized');
@@ -35,12 +28,19 @@ export class NotesGateway {
     client.handshake.headers.note_id = null;
   }
 
-  async emitEventToNote(
+  async emitEventToNote(noteId: string, event: string, payload: any) {
+    this.server.to(getNoteRoom(noteId)).emit(event, payload);
+  }
+
+  async emitEventToNoteExceptClient(
     noteId: string,
     event: string,
     payload: any,
-    clientId: string = undefined,
+    clientId: string,
   ) {
-    this.server.to(getNoteRoom(noteId)).emit(event, payload, clientId || null);
+    this.server
+      .to(getNoteRoom(noteId))
+      .except(clientId)
+      .emit(event, payload, clientId);
   }
 }

@@ -7,10 +7,9 @@ export const NOTE_SOCKET_EVENTS = {
 };
 
 export enum NOTE_BATCH_EVENTS {
-  NOTE_INFO_UPDATED_BATCH = 'noteTitle-Batch-Updated',
+  NOTE_INFO_UPDATED_BATCH = 'noteInfo-Batch-Updated',
   NOTE_BLOCK_CREATED_BATCH = 'noteBlock-Batch-Created',
-  NOTE_BLOCK_TYPE_UPDATED_BATCH = 'noteBlock-Type-Batch-Updated',
-  NOTE_BLOCK_PROPS_UPDATED_BATCH = 'noteBlock-Props-Batch-Updated',
+  NOTE_BLOCK_UPDATED_BATCH = 'noteBlock-Batch-Updated',
   NOTE_BLOCK_DELETED_BATCH = 'noteBlock-Batch-Deleted',
 }
 

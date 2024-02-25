@@ -28,14 +28,19 @@ export class VaultsGateway {
     client.handshake.headers.vault_id = null;
   }
 
-  async emitEventToVault(
+  async emitEventToVault(vaultId: string, event: string, payload: any) {
+    this.server.to(getVaultRoom(vaultId)).emit(event, payload);
+  }
+
+  async emitEventToVaultExceptClient(
     vaultId: string,
     event: string,
     payload: any,
-    clientId: string = undefined,
+    clientId: string,
   ) {
     this.server
       .to(getVaultRoom(vaultId))
-      .emit(event, payload, clientId || null);
+      .except(clientId)
+      .emit(event, payload, clientId);
   }
 }
