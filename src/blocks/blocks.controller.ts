@@ -15,7 +15,6 @@ import { BlocksService } from './blocks.service';
 import { NoteId } from 'src/notes/note.decorator';
 import { CreateBlockDto } from './dto/create-block.dto';
 import { UpdateBlockDto } from './dto/update-block.dto';
-import { NotesGateway } from 'src/notes/notes.gateway';
 
 @Controller('blocks')
 @UseGuards(JwtAuthGuard, NoteAccessGuard)
@@ -30,27 +29,23 @@ import { NotesGateway } from 'src/notes/notes.gateway';
   required: true,
 })
 export class BlocksController {
-  constructor(
-    private readonly blocksService: BlocksService,
-    private readonly notesGateway: NotesGateway,
-  ) {}
+  constructor(private readonly blocksService: BlocksService) {}
 
   @Get()
   findAll(@NoteId() noteId: string) {
     return this.blocksService.findAll(noteId);
   }
 
+  @Get(':blockId')
+  findOne(@Param('blockId') blockId: string) {
+    return this.blocksService.findOne(blockId);
+  }
+
   @Post()
   async create(@NoteId() noteId, @Body() createBlockDto: CreateBlockDto) {
     const createdBlock = await this.blocksService.create(
       noteId,
-      createBlockDto.order,
-    );
-
-    await this.notesGateway.emitEventToNote(
-      noteId,
-      'block-created',
-      createdBlock,
+      createBlockDto,
     );
 
     return createdBlock;
@@ -58,41 +53,21 @@ export class BlocksController {
 
   @Put(':blockId')
   async updateBlock(
-    @NoteId() noteId: string,
     @Param('blockId') blockId: string,
     @Body() updateBlockDto: UpdateBlockDto,
   ) {
-    const { type, props } = updateBlockDto;
-
     const updatedBlock = await this.blocksService.updateBlock(
       blockId,
-      type,
-      props,
+      updateBlockDto,
     );
-
-    this.notesGateway.emitEventToNote(noteId, 'block-updated', updatedBlock);
 
     return updatedBlock;
   }
 
-  // @Patch(':blockId/move/:newOrder')
-  // async moveBlockToPosition(
-  //   @Param('blockId') blockId: string,
-  //   @Param('newOrder') newOrder: number,
-  // ) {
-  //   await this.blocksService.moveBlockToPosition(blockId, newOrder);
-  // }
-
   @Delete(':blockId')
   async deleteBlock(@NoteId() noteId, @Param('blockId') blockId: string) {
-    const deletedBlock = await this.blocksService.deleteBlock(blockId);
+    await this.blocksService.delete(blockId);
 
-    await this.notesGateway.emitEventToNote(
-      noteId,
-      'block-deleted',
-      deletedBlock,
-    );
-
-    return deletedBlock;
+    return { message: 'Block deleted successfully', success: true };
   }
 }

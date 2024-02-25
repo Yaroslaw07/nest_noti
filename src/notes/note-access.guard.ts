@@ -1,6 +1,6 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { VaultsService } from 'src/vaults/vaults.service';
-import { NotesService } from './services/notes.service';
+import { NotesService } from './notes.service';
 
 @Injectable()
 export class NoteAccessGuard implements CanActivate {

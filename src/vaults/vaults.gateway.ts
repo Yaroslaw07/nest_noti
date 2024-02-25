@@ -31,8 +31,11 @@ export class VaultsGateway {
   async emitEventToVault(
     vaultId: string,
     event: string,
-    payload: Record<string, any>,
+    payload: any,
+    clientId: string = undefined,
   ) {
-    this.server.to(getVaultRoom(vaultId)).emit(event, payload);
+    this.server
+      .to(getVaultRoom(vaultId))
+      .emit(event, payload, clientId || null);
   }
 }

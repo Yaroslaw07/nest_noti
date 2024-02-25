@@ -40,7 +40,7 @@ export class Note {
   @ApiProperty()
   @IsBoolean()
   @Column('boolean', { default: false })
-  pinned: boolean;
+  isPinned: boolean;
 
   @ApiProperty()
   @IsString()

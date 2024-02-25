@@ -11,6 +11,7 @@ import { JwtStrategy } from './auth/strategies/jwt.strategy';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BlocksModule } from './blocks/blocks.module';
 import { SocketModule } from './socket/socket.module';
+import { BatchModule } from './batch/batch.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { SocketModule } from './socket/socket.module';
     NotesModule,
     BlocksModule,
     SocketModule,
+    BatchModule,
   ],
   controllers: [AppController],
   providers: [AppService, JwtAuthGuard, JwtStrategy],

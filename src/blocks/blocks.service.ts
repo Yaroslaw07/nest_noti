@@ -1,24 +1,71 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { Repository, SelectQueryBuilder } from 'typeorm';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { DeepPartial, EntityManager, EntityTarget, Repository } from 'typeorm';
 import { Block } from './entities/block.entity';
 import { InjectRepository } from '@nestjs/typeorm';
+import { BlockOrderHelper } from './blocks-order.helper';
+import { CreateBlockDto } from './dto/create-block.dto';
+import { UpdateBlockDto } from './dto/update-block.dto';
+import * as uuidValidate from 'uuid-validate';
 
 @Injectable()
 export class BlocksService {
   constructor(
     @InjectRepository(Block)
     private blockRepository: Repository<Block>,
+    private readonly blockOrderHelper: BlockOrderHelper,
   ) {}
 
-  async findAll(noteId: string) {
-    return this.blockRepository.find({
+  async findAll(
+    noteId: string,
+    entityManager?: EntityManager,
+  ): Promise<Block[]> {
+    if (!noteId) {
+      throw new Error('Invalid noteId provided');
+    }
+
+    const repository = entityManager
+      ? entityManager.getRepository(Block)
+      : this.blockRepository;
+
+    return await repository.find({
       where: { note: { id: noteId } },
       order: { order: 'ASC' },
     });
   }
 
-  async create(noteId: string, order: number) {
-    const maxOrderBlock = await this.blockRepository
+  async findOne(
+    blockId: string,
+    entityManager?: EntityManager,
+  ): Promise<Block> {
+    const repository = entityManager
+      ? entityManager.getRepository(Block)
+      : this.blockRepository;
+
+    return await repository.findOne({
+      where: { id: blockId },
+    });
+  }
+
+  async create(
+    noteId: string,
+    createBlockDto: CreateBlockDto,
+    entityManager?: EntityManager,
+  ) {
+    const repository = entityManager
+      ? entityManager.getRepository(Block)
+      : this.blockRepository;
+
+    const { order, type, props, id } = createBlockDto;
+
+    if (id && !uuidValidate(id)) {
+      throw new ConflictException('Invalid block ID provided');
+    }
+
+    const maxOrderBlock = await repository
       .createQueryBuilder('block')
       .select('MAX(block.order)', 'maxOrder')
       .where('block.noteId = :noteId', { noteId })
@@ -26,26 +73,46 @@ export class BlocksService {
 
     if (order > maxOrderBlock.maxOrder + 1 || order < 0) {
       throw new NotFoundException(
-        `Block with order ${order} can't been block in note ${noteId} cause it's out of range.`,
+        `Block with order ${order} can't be placed in note ${noteId} because it's out of range.`,
       );
     }
 
-    await this.increaseOrder(noteId, order);
+    await this.blockOrderHelper.adjustOrderOnCreate(repository, noteId, order);
 
-    const block = this.blockRepository.create({
+    const createBlock = (
+      entity: EntityTarget<Block>,
+      data: DeepPartial<Block>,
+    ) =>
+      entityManager
+        ? entityManager.create(entity, data)
+        : this.blockRepository.create(data);
+
+    const block = createBlock(Block, {
       note: { id: noteId },
       order,
-      type: 'text',
-      props: {
-        text: '',
-      },
+      type: type || 'text',
+      props: props || { text: '' },
+      id,
     });
 
-    return this.blockRepository.save(block);
+    try {
+      return await repository.save(block);
+    } catch (error) {
+      console.error('Error occurred while saving block:', error);
+      throw error;
+    }
   }
 
-  async updateBlock(blockId: string, newType: string, newProps: any) {
-    const block = await this.blockRepository.findOne({
+  async updateBlock(
+    blockId: string,
+    newBlock: UpdateBlockDto,
+    entityManager?: EntityManager,
+  ) {
+    const repository = entityManager
+      ? entityManager.getRepository(Block)
+      : this.blockRepository;
+
+    const block = await repository.findOne({
       where: {
         id: blockId,
       },
@@ -55,58 +122,20 @@ export class BlocksService {
       throw new NotFoundException(`Block with ID ${blockId} not found.`);
     }
 
-    block.type = newType;
-    block.props = newProps;
+    const { type, props } = newBlock;
 
-    return this.blockRepository.save(block);
+    type && (block.type = type);
+    block.props = props;
+
+    return repository.save(block);
   }
 
-  async updateBlocksProps(blockId: string, newProps: string) {
-    const block = await this.blockRepository.findOne({
-      where: {
-        id: blockId,
-      },
-    });
+  async delete(blockId: string, entityManager?: EntityManager) {
+    const repository = entityManager
+      ? entityManager.getRepository(Block)
+      : this.blockRepository;
 
-    if (!block) {
-      throw new NotFoundException(`Block with ID ${blockId} not found.`);
-    }
-
-    block.props = newProps;
-
-    return this.blockRepository.save(block);
-  }
-
-  // async moveBlockToPosition(blockId: string, newOrder: number): Promise<Block> {
-  //   const block = await this.blockRepository.findOne({
-  //     where: { id: blockId },
-  //     relations: ['note'],
-  //   });
-
-  //   if (!block) {
-  //     throw new NotFoundException(`Block with ID ${blockId} not found.`);
-  //   }
-
-  //   const noteId = block.note.id;
-  //   const currentOrder = block.order;
-
-  //   if (newOrder === currentOrder) {
-  //     return block;
-  //   }
-
-  //   if (newOrder < currentOrder) {
-  //     await this.decreaseOrder(noteId, newOrder, currentOrder);
-  //   } else {
-  //     await this.increaseOrder(noteId, currentOrder, newOrder);
-  //   }
-
-  //   block.order = newOrder;
-
-  //   return this.blockRepository.save(block);
-  // }
-
-  async deleteBlock(blockId: string) {
-    const block = await this.blockRepository.findOne({
+    const block = await repository.findOne({
       where: { id: blockId },
       relations: ['note'],
     });
@@ -118,62 +147,8 @@ export class BlocksService {
     const noteId = block.note.id;
     const order = block.order;
 
-    await this.decreaseOrder(noteId, order);
+    await this.blockOrderHelper.adjustOrderOnDelete(repository, noteId, order);
 
-    const deleteBlock = await this.blockRepository.remove(block);
-
-    return deleteBlock;
-  }
-
-  private async increaseOrder(
-    noteId: string,
-    startOrder: number,
-    endOrder?: number,
-  ) {
-    const queryBuilder = this.createOrderUpdateQueryBuilder(
-      noteId,
-      startOrder,
-      endOrder,
-    );
-    await queryBuilder
-      .update()
-      .set({ order: () => '"order" + 1' })
-      .execute();
-  }
-
-  private async decreaseOrder(
-    noteId: string,
-    startOrder: number,
-    endOrder?: number,
-  ) {
-    const queryBuilder = this.createOrderUpdateQueryBuilder(
-      noteId,
-      startOrder,
-      endOrder,
-    );
-    await queryBuilder
-      .update()
-      .set({ order: () => '"order" - 1' })
-      .execute();
-  }
-
-  private createOrderUpdateQueryBuilder(
-    noteId: string,
-    startOrder: number,
-    endOrder?: number,
-  ): SelectQueryBuilder<Block> {
-    const queryBuilder = this.blockRepository.createQueryBuilder();
-    queryBuilder.update(Block).where('noteId = :noteId', { noteId });
-
-    if (endOrder) {
-      queryBuilder.andWhere('order >= :startOrder AND order <= :endOrder', {
-        startOrder,
-        endOrder,
-      });
-    } else {
-      queryBuilder.andWhere('order >= :startOrder', { startOrder });
-    }
-
-    return queryBuilder;
+    await repository.remove(block);
   }
 }

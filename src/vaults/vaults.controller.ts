@@ -44,6 +44,11 @@ export class VaultsController {
     return this.vaultsService.findAll(user.id);
   }
 
+  @Get(':vaultId')
+  findOne(@Param('vaultId') vaultId: string) {
+    return this.vaultsService.findOneWithOwner(vaultId);
+  }
+
   @Put(':id')
   async update(
     @Param('id') id: string,
