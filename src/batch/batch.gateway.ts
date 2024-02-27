@@ -4,10 +4,11 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { BatchService } from './batch.service';
+import { BatchService } from './services/batch.service';
 import { NOTE_SOCKET_EVENTS } from 'src/notes/note-events.helper';
 import { BatchRequestDto } from './dto/batch.dto';
 import { NotesGateway } from 'src/notes/notes.gateway';
+import { VaultsGateway } from 'src/vaults/vaults.gateway';
 
 @WebSocketGateway({ cors: true })
 export class BatchGateway {
@@ -17,6 +18,7 @@ export class BatchGateway {
   constructor(
     private readonly batchService: BatchService,
     private readonly notesGateway: NotesGateway,
+    private readonly vaultsGateway: VaultsGateway,
   ) {}
 
   async afterInit() {
@@ -26,8 +28,9 @@ export class BatchGateway {
   @SubscribeMessage(NOTE_SOCKET_EVENTS.TO_BATCH_UPDATE_NOTE)
   async executeBatch(socket: Socket, payload: BatchRequestDto) {
     const noteId = socket.handshake.headers.note_id as string;
+    const vaultId = socket.handshake.headers.vault_id as string;
 
-    if (!noteId) {
+    if (!noteId && !vaultId) {
       console.error('Note ID missing in headers');
       return { error: 'Note ID missing in headers' };
     }
@@ -40,6 +43,18 @@ export class BatchGateway {
         result,
         socket.id,
       );
+
+      const index = result.processedChanges.findIndex(
+        (change) => change.type === 'noteInfo-Updated',
+      );
+
+      if (index !== -1) {
+        this.vaultsGateway.emitEventToVault(vaultId, 'vault-Updated', {
+          updatedNote: result.processedChanges[index].data,
+          timeStamp: result.timeStamp,
+        });
+      }
+
       return result;
     } catch (error) {
       console.error('Error executing batch:', error);

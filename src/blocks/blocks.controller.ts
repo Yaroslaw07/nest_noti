@@ -16,10 +16,8 @@ import { NoteId } from 'src/notes/note.decorator';
 import { CreateBlockDto } from './dto/create-block.dto';
 import { UpdateBlockDto } from './dto/update-block.dto';
 import { NotesGateway } from 'src/notes/notes.gateway';
-import {
-  NOTE_BATCH_EVENTS,
-  NOTE_SOCKET_EVENTS,
-} from 'src/notes/note-events.helper';
+import { NOTE_SOCKET_EVENTS } from 'src/notes/note-events.helper';
+import { BATCH_EVENTS } from 'src/batch/batch-events.helpers';
 
 @Controller('blocks')
 @UseGuards(JwtAuthGuard, NoteAccessGuard)
@@ -63,7 +61,7 @@ export class BlocksController {
       NOTE_SOCKET_EVENTS.UPDATED_BATCH_NOTE,
       [
         {
-          type: NOTE_BATCH_EVENTS.NOTE_BLOCK_CREATED_BATCH,
+          type: BATCH_EVENTS.NOTE_BLOCK_CREATED_BATCH,
           data: createdBlock,
           timeStamp,
         },
@@ -92,7 +90,7 @@ export class BlocksController {
       NOTE_SOCKET_EVENTS.UPDATED_BATCH_NOTE,
       [
         {
-          type: NOTE_BATCH_EVENTS.NOTE_BLOCK_UPDATED_BATCH,
+          type: BATCH_EVENTS.NOTE_BLOCK_UPDATED_BATCH,
           data: updatedBlock,
           timeStamp: timeStamp,
         },
@@ -114,7 +112,7 @@ export class BlocksController {
       NOTE_SOCKET_EVENTS.UPDATED_BATCH_NOTE,
       [
         {
-          type: NOTE_BATCH_EVENTS.NOTE_BLOCK_DELETED_BATCH,
+          type: BATCH_EVENTS.NOTE_BLOCK_DELETED_BATCH,
           data: blockId,
           timeStamp: timeStamp,
         },
