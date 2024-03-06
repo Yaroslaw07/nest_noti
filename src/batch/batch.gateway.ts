@@ -5,10 +5,14 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { BatchService } from './services/batch.service';
-import { NOTE_SOCKET_EVENTS } from 'src/notes/note-events.helper';
+import {
+  NOTE_INFOS_SOCKET_EVENTS,
+  NOTE_SOCKET_EVENTS,
+} from 'src/notes/note-events.helper';
 import { BatchRequestDto } from './dto/batch.dto';
 import { NotesGateway } from 'src/notes/notes.gateway';
 import { VaultsGateway } from 'src/vaults/vaults.gateway';
+import { BATCH_EVENTS } from './batch-events.helpers';
 
 @WebSocketGateway({ cors: true })
 export class BatchGateway {
@@ -35,6 +39,8 @@ export class BatchGateway {
       return { error: 'Note ID missing in headers' };
     }
 
+    console.log('Executing batch:', payload);
+
     try {
       const result = await this.batchService.executeBatch(noteId, payload);
       this.notesGateway.emitEventToNoteExceptClient(
@@ -45,14 +51,20 @@ export class BatchGateway {
       );
 
       const index = result.processedChanges.findIndex(
-        (change) => change.type === 'noteInfo-Updated',
+        (change) => change.event === BATCH_EVENTS.NOTE_INFO_UPDATED_BATCH,
       );
 
+      console.log('Index:', index);
+
       if (index !== -1) {
-        this.vaultsGateway.emitEventToVault(vaultId, 'vault-Updated', {
-          updatedNote: result.processedChanges[index].data,
-          timeStamp: result.timeStamp,
-        });
+        this.vaultsGateway.emitEventToVault(
+          vaultId,
+          NOTE_INFOS_SOCKET_EVENTS.NOTE_INFOS_UPDATED,
+          {
+            updatedNote: result.processedChanges[index].data,
+            timeStamp: result.timeStamp,
+          },
+        );
       }
 
       return result;

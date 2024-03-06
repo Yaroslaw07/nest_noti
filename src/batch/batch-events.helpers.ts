@@ -2,7 +2,9 @@ import { ConflictException } from '@nestjs/common';
 
 export const getEventData = (event: string): ParsedEvent => {
   try {
-    const handler = BATCH_EVENT_INFO[event].handler;
+    const clearEvent = event.split('_')[0];
+
+    const handler = BATCH_EVENT_INFO[clearEvent].handler;
 
     if (!handler) {
       throw new ConflictException('Invalid batch event type:' + event);

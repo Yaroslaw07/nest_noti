@@ -44,7 +44,7 @@ export class BatchController {
     );
 
     const index = changes.processedChanges.findIndex(
-      (change) => change.type === 'noteInfo-Updated',
+      (change) => change.event === 'noteInfo-Updated',
     );
 
     if (index !== -1) {

@@ -17,7 +17,7 @@ export class BatchService {
   ) {}
 
   async executeBatch(noteId: string, batchDto: BatchRequestDto) {
-    const { batchChanges, timeStamp } = batchDto;
+    const { batchUpdates: batchChanges, timeStamp } = batchDto;
     batchChanges.sort((a, b) => a.timeStamp - b.timeStamp);
 
     const groupedChanges: BatchUnit[] = this.batchGroupService
@@ -31,7 +31,7 @@ export class BatchService {
     await this.entityManager.transaction(async (entityManager) => {
       try {
         for (const change of groupedChanges) {
-          const { event, additionalEventInfo } = getEventData(change.type);
+          const { event, additionalEventInfo } = getEventData(change.event);
 
           const processedData = await this.batchUpdateHandler(
             event,
@@ -41,7 +41,7 @@ export class BatchService {
           );
 
           processedChanges.push({
-            type: event,
+            event: event,
             data: processedData,
             timeStamp: change.timeStamp,
           });

@@ -4,7 +4,7 @@ import { IsNotEmpty } from 'class-validator';
 export class BatchUnit {
   @ApiProperty()
   @IsNotEmpty()
-  type: string;
+  event: string;
 
   @ApiProperty()
   @IsNotEmpty()

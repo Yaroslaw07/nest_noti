@@ -10,18 +10,18 @@ export class BatchGroupService {
     const groupedChanges: BatchUnit[] = [];
 
     batchChanges.forEach((change) => {
-      const { type: event, data } = change;
+      const { event, data } = change;
 
       if (!isEventGrouped(event)) {
         groupedChanges.push(change);
         return;
       }
 
-      const index = groupedChanges.findIndex((item) => item.type === event);
+      const index = groupedChanges.findIndex((item) => item.event === event);
 
       if (index === -1) {
         groupedChanges.push({
-          type: event,
+          event: event,
           data: data,
           timeStamp: change.timeStamp,
         });

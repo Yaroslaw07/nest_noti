@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { Block } from './entities/block.entity';
-import { SelectQueryBuilder } from 'typeorm/query-builder/SelectQueryBuilder';
 
 @Injectable()
 export class BlockOrderHelper {
@@ -25,17 +24,14 @@ export class BlockOrderHelper {
     repository: Repository<Block>,
     noteId: string,
     startOrder: number,
-    endOrder?: number,
   ) {
-    const queryBuilder = this.createOrderUpdateQueryBuilder(
-      repository,
-      noteId,
-      startOrder,
-      endOrder,
-    );
-
-    await queryBuilder
-      .update()
+    await repository
+      .createQueryBuilder()
+      .update(Block)
+      .where('noteId = :noteId AND order >= :startOrder', {
+        noteId,
+        startOrder,
+      })
       .set({ order: () => '"order" + 1' })
       .execute();
   }
@@ -44,38 +40,15 @@ export class BlockOrderHelper {
     repository: Repository<Block>,
     noteId: string,
     startOrder: number,
-    endOrder?: number,
   ) {
-    const queryBuilder = this.createOrderUpdateQueryBuilder(
-      repository,
-      noteId,
-      startOrder,
-      endOrder,
-    );
-    await queryBuilder
-      .update()
+    await repository
+      .createQueryBuilder()
+      .update(Block)
+      .where('noteId = :noteId AND order >= :startOrder', {
+        noteId,
+        startOrder,
+      })
       .set({ order: () => '"order" - 1' })
       .execute();
-  }
-
-  private createOrderUpdateQueryBuilder(
-    repository: Repository<Block>,
-    noteId: string,
-    startOrder: number,
-    endOrder?: number,
-  ): SelectQueryBuilder<Block> {
-    const queryBuilder = repository.createQueryBuilder();
-    queryBuilder.update(Block).where('noteId = :noteId', { noteId });
-
-    if (endOrder) {
-      queryBuilder.andWhere('order >= :startOrder AND order <= :endOrder', {
-        startOrder,
-        endOrder,
-      });
-    } else {
-      queryBuilder.andWhere('order >= :startOrder', { startOrder });
-    }
-
-    return queryBuilder;
   }
 }

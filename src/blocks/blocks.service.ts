@@ -10,7 +10,6 @@ import { BlockOrderHelper } from './blocks-order.helper';
 import { CreateBlockDto } from './dto/create-block.dto';
 import { UpdateBlockDto } from './dto/update-block.dto';
 import * as uuidValidate from 'uuid-validate';
-import { NotesGateway } from 'src/notes/notes.gateway';
 
 @Injectable()
 export class BlocksService {
@@ -18,7 +17,6 @@ export class BlocksService {
     @InjectRepository(Block)
     private blockRepository: Repository<Block>,
     private readonly blockOrderHelper: BlockOrderHelper,
-    private readonly notesGateway: NotesGateway,
   ) {}
 
   async findAll(

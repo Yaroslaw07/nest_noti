@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsDate, IsNotEmpty, IsString } from 'class-validator';
 import { Note } from 'src/notes/entities/note.entity';
 import {
   Column,
@@ -33,6 +33,11 @@ export class Block {
   @IsNotEmpty()
   @Column('jsonb', { default: { text: '' } })
   props: any;
+
+  @ApiProperty()
+  @IsDate()
+  @Column('timestamp', { default: () => 'CURRENT_TIMESTAMP' })
+  updatedAt: Date;
 
   @ManyToOne(() => Note, (note) => note.blocks, {
     cascade: true,

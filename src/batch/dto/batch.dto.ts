@@ -7,7 +7,7 @@ export class BatchRequestDto {
   @IsArray()
   @ValidateNested({ each: true })
   @IsNotEmpty()
-  batchChanges: BatchUnit[];
+  batchUpdates: BatchUnit[];
 
   @ApiProperty()
   @IsNotEmpty()
