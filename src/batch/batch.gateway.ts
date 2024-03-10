@@ -39,30 +39,25 @@ export class BatchGateway {
       return { error: 'Note ID missing in headers' };
     }
 
-    console.log('Executing batch:', payload);
-
     try {
       const result = await this.batchService.executeBatch(noteId, payload);
-      this.notesGateway.emitEventToNoteExceptClient(
+      this.notesGateway.emitEventToNote(
         noteId,
         NOTE_SOCKET_EVENTS.UPDATED_BATCH_NOTE,
         result,
-        socket.id,
       );
 
-      const index = result.processedChanges.findIndex(
+      const index = result.batchUpdates.findIndex(
         (change) => change.event === BATCH_EVENTS.NOTE_INFO_UPDATED_BATCH,
       );
-
-      console.log('Index:', index);
 
       if (index !== -1) {
         this.vaultsGateway.emitEventToVault(
           vaultId,
           NOTE_INFOS_SOCKET_EVENTS.NOTE_INFOS_UPDATED,
           {
-            updatedNote: result.processedChanges[index].data,
-            timeStamp: result.timeStamp,
+            updatedNote: result.batchUpdates[index].data,
+            timeStamp: result.batchUpdates[index].timeStamp,
           },
         );
       }

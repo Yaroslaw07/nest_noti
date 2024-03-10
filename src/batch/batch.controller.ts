@@ -10,6 +10,7 @@ import { NOTE_SOCKET_EVENTS } from 'src/notes/note-events.helper';
 import { VaultsGateway } from 'src/vaults/vaults.gateway';
 import { VaultId } from 'src/vaults/vault.decorator';
 import { VAULT_EVENTS } from 'src/vaults/vault-events.helper';
+import { BATCH_EVENTS } from './batch-events.helpers';
 
 @Controller('batch')
 @UseGuards(JwtAuthGuard, NoteAccessGuard)
@@ -43,14 +44,14 @@ export class BatchController {
       changes,
     );
 
-    const index = changes.processedChanges.findIndex(
-      (change) => change.event === 'noteInfo-Updated',
+    const index = changes.batchUpdates.findIndex(
+      (change) => change.event === BATCH_EVENTS.NOTE_INFO_UPDATED_BATCH,
     );
 
     if (index !== -1) {
       this.vaultsGateway.emitEventToVault(vaultId, VAULT_EVENTS.VAULT_UPDATED, {
-        updatedNote: changes.processedChanges[index].data,
-        timeStamp: changes.timeStamp,
+        updatedNote: changes.batchUpdates[index].data,
+        timeStamp: changes.batchUpdates[index].timeStamp,
       });
     }
 

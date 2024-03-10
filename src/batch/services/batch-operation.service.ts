@@ -38,6 +38,8 @@ export class BatchOperationService {
   }
 
   async batchDeleteBlock(blockId: string, entityManager: EntityManager) {
-    return await this.blocksService.delete(blockId, entityManager);
+    await this.blocksService.delete(blockId, entityManager);
+
+    return { id: blockId };
   }
 }

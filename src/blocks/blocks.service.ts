@@ -124,7 +124,6 @@ export class BlocksService {
 
     const { type, props } = newBlock;
 
-    console.log('Block:', block, type);
     type && (block.type = type);
     props && (block.props = props);
 

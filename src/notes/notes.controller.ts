@@ -17,7 +17,6 @@ import { NotesService } from './notes.service';
 import { NotesGateway } from './notes.gateway';
 import { BATCH_EVENTS } from 'src/batch/batch-events.helpers';
 import { VaultsGateway } from 'src/vaults/vaults.gateway';
-import { VAULT_EVENTS } from 'src/vaults/vault-events.helper';
 import { NOTE_INFOS_SOCKET_EVENTS } from './note-events.helper';
 
 @Controller('notes')
@@ -40,8 +39,8 @@ export class NotesController {
     return this.notesService.findAll(vaultId);
   }
 
-  @Get(':noteId')
-  findOne(@Param('noteId') noteId: string) {
+  @Get(':id')
+  findOne(@Param('id') noteId: string) {
     return this.notesService.findOne(noteId);
   }
 
@@ -62,7 +61,7 @@ export class NotesController {
     return createdNote;
   }
 
-  @Put(':id/note-info')
+  @Put(':id')
   async updateTitle(
     @VaultId() vaultId: string,
     @Param('id') noteId: string,
@@ -90,10 +89,14 @@ export class NotesController {
       },
     );
 
-    this.vaultsGateway.emitEventToVault(vaultId, VAULT_EVENTS.VAULT_UPDATED, {
-      updatedNote,
-      timeStamp,
-    });
+    this.vaultsGateway.emitEventToVault(
+      vaultId,
+      NOTE_INFOS_SOCKET_EVENTS.NOTE_INFOS_UPDATED,
+      {
+        updatedNote,
+        timeStamp,
+      },
+    );
 
     return updatedNote;
   }
@@ -104,10 +107,14 @@ export class NotesController {
 
     await this.notesService.remove(noteId);
 
-    this.vaultsGateway.emitEventToVault(vaultId, VAULT_EVENTS.VAULT_UPDATED, {
-      deletedNote: { noteId },
-      timeStamp,
-    });
+    this.vaultsGateway.emitEventToVault(
+      vaultId,
+      NOTE_INFOS_SOCKET_EVENTS.NOTE_DELETED,
+      {
+        deletedNoteId: { noteId },
+        timeStamp,
+      },
+    );
 
     return { id: noteId };
   }

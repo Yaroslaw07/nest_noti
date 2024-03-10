@@ -17,14 +17,12 @@ export class BatchService {
   ) {}
 
   async executeBatch(noteId: string, batchDto: BatchRequestDto) {
-    const { batchUpdates: batchChanges, timeStamp } = batchDto;
+    const { batchUpdates: batchChanges, id } = batchDto;
     batchChanges.sort((a, b) => a.timeStamp - b.timeStamp);
 
     const groupedChanges: BatchUnit[] = this.batchGroupService
       .groupChanges(batchChanges)
       .sort((a, b) => a.timeStamp - b.timeStamp);
-
-    console.log(groupedChanges);
 
     const processedChanges: BatchUnit[] = [];
 
@@ -51,7 +49,7 @@ export class BatchService {
       }
     });
 
-    return { processedChanges, timeStamp };
+    return { batchUpdates: processedChanges, id };
   }
 
   async batchUpdateHandler(
@@ -60,8 +58,6 @@ export class BatchService {
     entityManager: EntityManager,
     additionalEventInfo: any,
   ) {
-    console.log(event);
-
     switch (event) {
       case BATCH_EVENTS.NOTE_INFO_UPDATED_BATCH:
         return await this.batchOperationService.batchUpdateNoteInfo(

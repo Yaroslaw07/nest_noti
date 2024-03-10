@@ -22,14 +22,18 @@ export class NotesService {
     return savedNote;
   }
 
-  findAll(vaultId: string) {
-    return this.notesRepository.find({
+  async findAll(vaultId: string) {
+    const notes = await this.notesRepository.find({
       where: {
         vault: {
           id: vaultId,
         },
       },
     });
+
+    const timeStamp = new Date();
+
+    return { notes, timeStamp };
   }
 
   async findOne(noteId: string) {
@@ -44,7 +48,9 @@ export class NotesService {
       throw new NotFoundException('Note does not exist');
     }
 
-    return note;
+    const timeStamp = new Date();
+
+    return { note, timeStamp };
   }
 
   async findOneWithVault(noteId: string) {
