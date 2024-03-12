@@ -122,10 +122,19 @@ export class BlocksService {
       throw new NotFoundException(`Block with ID ${blockId} not found.`);
     }
 
-    const { type, props } = newBlock;
+    const { type, props, updatedAt } = newBlock;
+
+    const updatedTime = new Date(updatedAt) || new Date();
+
+    if (block.updatedAt > updatedTime) {
+      throw new ConflictException(
+        `Block with ID ${blockId} was updated by another user.`,
+      );
+    }
 
     type && (block.type = type);
     props && (block.props = props);
+    block.updatedAt = updatedTime;
 
     return repository.save(block);
   }

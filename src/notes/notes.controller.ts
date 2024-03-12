@@ -12,12 +12,13 @@ import { ApiBearerAuth, ApiHeader, ApiTags } from '@nestjs/swagger';
 import { VaultAccessGuard } from 'src/vaults/vault-access.guard';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { VaultId } from 'src/vaults/vault.decorator';
-import { UpdateNoteInfoDto } from './dto/update-note-info.dto';
+import { UpdateNoteInfoDto } from './dto/update-note.dto';
 import { NotesService } from './notes.service';
 import { NotesGateway } from './notes.gateway';
 import { BATCH_EVENTS } from 'src/batch/batch-events.helpers';
 import { VaultsGateway } from 'src/vaults/vaults.gateway';
 import { NOTE_INFOS_SOCKET_EVENTS } from './note-events.helper';
+import { CreateNoteDto } from './dto/create-note.dto';
 
 @Controller('notes')
 @UseGuards(JwtAuthGuard, VaultAccessGuard)
@@ -45,9 +46,12 @@ export class NotesController {
   }
 
   @Post()
-  async create(@VaultId() vaultId: string) {
+  async create(
+    @VaultId() vaultId: string,
+    @Body() createNoteDto: CreateNoteDto,
+  ) {
     const timeStamp = new Date().getTime();
-    const createdNote = await this.notesService.create(vaultId);
+    const createdNote = await this.notesService.create(vaultId, createNoteDto);
 
     this.vaultsGateway.emitEventToVault(
       vaultId,
@@ -111,7 +115,7 @@ export class NotesController {
       vaultId,
       NOTE_INFOS_SOCKET_EVENTS.NOTE_DELETED,
       {
-        deletedNoteId: { noteId },
+        deletedNoteId: noteId,
         timeStamp,
       },
     );

@@ -1,5 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  IsBoolean,
+  IsDate,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class UpdateNoteInfoDto {
   @ApiProperty({ required: false })
@@ -13,4 +19,9 @@ export class UpdateNoteInfoDto {
   @IsBoolean()
   @IsOptional()
   isPinned?: boolean;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsDate()
+  updatedAt?: Date;
 }

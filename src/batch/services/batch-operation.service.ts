@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { BlocksService } from 'src/blocks/blocks.service';
 import { CreateBlockDto } from 'src/blocks/dto/create-block.dto';
 import { UpdateBlockDto } from 'src/blocks/dto/update-block.dto';
-import { UpdateNoteInfoDto } from 'src/notes/dto/update-note-info.dto';
+import { UpdateNoteInfoDto } from 'src/notes/dto/update-note.dto';
 import { NotesService } from 'src/notes/notes.service';
 import { EntityManager } from 'typeorm';
 

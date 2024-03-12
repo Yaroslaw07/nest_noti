@@ -1,8 +1,13 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, Repository } from 'typeorm';
 import { Note } from './entities/note.entity';
-import { UpdateNoteInfoDto } from './dto/update-note-info.dto';
+import { UpdateNoteInfoDto } from './dto/update-note.dto';
+import { CreateNoteDto } from './dto/create-note.dto';
 
 @Injectable()
 export class NotesService {
@@ -11,8 +16,11 @@ export class NotesService {
     private notesRepository: Repository<Note>,
   ) {}
 
-  async create(vaultId: string) {
+  async create(vaultId: string, createNoteDto: CreateNoteDto) {
+    const { id } = createNoteDto;
+
     const savedNote = await this.notesRepository.save({
+      id: id,
       title: 'Undefined',
       vault: {
         id: vaultId,
@@ -73,8 +81,6 @@ export class NotesService {
     updateNoteInfoDto: UpdateNoteInfoDto,
     entityManager?: EntityManager,
   ) {
-    const { title, isPinned } = updateNoteInfoDto;
-
     const repository = entityManager
       ? entityManager.getRepository(Note)
       : this.notesRepository;
@@ -89,12 +95,19 @@ export class NotesService {
       throw new NotFoundException('Note does not exist');
     }
 
-    return repository.save({
-      ...existingNote,
-      title: title && title !== '' ? title : existingNote.title,
-      isPinned: isPinned !== undefined ? isPinned : existingNote.isPinned,
-      updatedAt: new Date(),
-    });
+    const { title, isPinned, updatedAt } = updateNoteInfoDto;
+
+    const updatedTime = new Date(updatedAt) || new Date();
+
+    if (existingNote.updatedAt > updatedTime) {
+      throw new ConflictException('Note was updated by another user');
+    }
+
+    title && (existingNote.title = title);
+    isPinned !== undefined && (existingNote.isPinned = isPinned);
+    existingNote.updatedAt = updatedTime;
+
+    return repository.save(existingNote);
   }
 
   async remove(noteId: string) {
