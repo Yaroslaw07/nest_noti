@@ -124,7 +124,7 @@ export class BlocksService {
 
     const { type, props, updatedAt } = newBlock;
 
-    const updatedTime = new Date(updatedAt) || new Date();
+    const updatedTime = updatedAt ? new Date(updatedAt) : new Date();
 
     if (block.updatedAt > updatedTime) {
       throw new ConflictException(

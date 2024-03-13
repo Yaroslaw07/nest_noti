@@ -97,7 +97,7 @@ export class NotesService {
 
     const { title, isPinned, updatedAt } = updateNoteInfoDto;
 
-    const updatedTime = new Date(updatedAt) || new Date();
+    const updatedTime = updatedAt ? new Date(updatedAt) : new Date();
 
     if (existingNote.updatedAt > updatedTime) {
       throw new ConflictException('Note was updated by another user');
