@@ -7,8 +7,9 @@ import {
   UseGuards,
   Body,
   Put,
+  Query,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiHeader, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiHeader, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { VaultAccessGuard } from 'src/vaults/vault-access.guard';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { VaultId } from 'src/vaults/vault.decorator';
@@ -35,9 +36,19 @@ export class NotesController {
     private readonly vaultsGateway: VaultsGateway,
   ) {}
 
+  @ApiQuery({
+    name: 'title',
+    required: false,
+    type: null,
+  })
+  @ApiQuery({
+    name: 'isPinned',
+    required: false,
+    type: '',
+  })
   @Get()
-  findAll(@VaultId() vaultId: string) {
-    return this.notesService.findAll(vaultId);
+  findAll(@VaultId() vaultId: string, @Query() query) {
+    return this.notesService.findAll(vaultId, query);
   }
 
   @Get(':id')

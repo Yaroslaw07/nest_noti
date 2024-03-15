@@ -30,14 +30,22 @@ export class NotesService {
     return savedNote;
   }
 
-  async findAll(vaultId: string) {
-    const notes = await this.notesRepository.find({
-      where: {
-        vault: {
-          id: vaultId,
-        },
-      },
-    });
+  async findAll(vaultId: string, filters) {
+    const query = this.notesRepository.createQueryBuilder('note');
+
+    query.where('note.vaultId = :vaultId', { vaultId });
+
+    if (filters.title) {
+      query.andWhere('note.title LIKE :title', { title: `%${filters.title}%` });
+    }
+
+    if (filters.isPinned !== undefined) {
+      query.andWhere('note.isPinned = :isPinned', {
+        isPinned: filters.isPinned,
+      });
+    }
+
+    const notes = await query.getMany();
 
     const timeStamp = new Date();
 
